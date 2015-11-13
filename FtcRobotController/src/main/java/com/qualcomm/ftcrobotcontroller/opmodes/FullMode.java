@@ -2,10 +2,11 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
-public class Fullmode extends OpMode {
+public class FullMode extends OpMode {
 
     final double LEFT_OPEN_POSITION = 0.0;
     final double LEFT_CLOSED_POSITION = 0.5;
@@ -24,12 +25,15 @@ public class Fullmode extends OpMode {
         leftMotor = hardwareMap.dcMotor.get("left_drive");
         rightMotor = hardwareMap.dcMotor.get("right_drive");
         armMotor = hardwareMap.dcMotor.get("arm_drive");
-        //leftGrip = hardwareMap.servo.get("left_grip");
-        //rightGrip = hardwareMap.servo.get("right_grip");
+        leftGrip = hardwareMap.servo.get("left_grip");
+        rightGrip = hardwareMap.servo.get("right_grip");
 
         //Reverse the right motor
         rightMotor.setDirection(DcMotor.Direction.REVERSE);
 
+        //Set running mode
+        leftMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+        rightMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
     }
 
     @Override
@@ -67,14 +71,14 @@ public class Fullmode extends OpMode {
         // gripper control
         // This code will open and close the gripper with two buttons
         // using 1 button to open and another to close the gripper
-//        if(gamepad1.x) {
-//            leftGrip.setPosition(LEFT_OPEN_POSITION);
-//            rightGrip.setPosition(RIGHT_OPEN_POSITION);
-//        }
-//        if(gamepad1.a) {
-//            leftGrip.setPosition(LEFT_CLOSED_POSITION);
-//            rightGrip.setPosition(RIGHT_CLOSED_POSITION);
-//        }
+        if(gamepad1.x) {
+            leftGrip.setPosition(LEFT_OPEN_POSITION);
+            rightGrip.setPosition(RIGHT_OPEN_POSITION);
+        }
+        if(gamepad1.a) {
+            leftGrip.setPosition(LEFT_CLOSED_POSITION);
+            rightGrip.setPosition(RIGHT_CLOSED_POSITION);
+        }
     }
 
 }
