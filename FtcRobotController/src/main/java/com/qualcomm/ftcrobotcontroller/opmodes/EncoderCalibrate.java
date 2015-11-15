@@ -10,35 +10,12 @@ import com.qualcomm.robotcore.util.Range;
 /**
  * OpMode to help calibrate target position for autonomous mode.
  */
-public class EncoderCalibrate extends OpMode {
-    final double LEFT_OPEN_POSITION = 0.0;
-    final double LEFT_CLOSED_POSITION = 0.5;
-    final double RIGHT_OPEN_POSITION = 1.0;
-    final double RIGHT_CLOSED_POSITION = 0.5;
-
-    DcMotor leftMotor;
-    DcMotor rightMotor;
-    DcMotor armMotor;
-    Servo leftGrip;
-    Servo rightGrip;
+public class EncoderCalibrate extends ClockBotHardware {
     int targetPosition;
     boolean engage;
 
     @Override
-    public void init() {
-        //Get references to the motors and servos from the hardware map
-        leftMotor = hardwareMap.dcMotor.get("left_drive");
-        rightMotor = hardwareMap.dcMotor.get("right_drive");
-        armMotor = hardwareMap.dcMotor.get("arm_drive");
-        //leftGrip = hardwareMap.servo.get("left_grip");
-        //rightGrip = hardwareMap.servo.get("right_grip");
-
-        //Reverse the right motor
-        rightMotor.setDirection(DcMotor.Direction.REVERSE);
-
-        // reset encoders
-        leftMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
-        rightMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+    public void start() {
 
         // set default target position
         targetPosition = 500;
@@ -46,7 +23,8 @@ public class EncoderCalibrate extends OpMode {
 
         telemetry.addData("Encode", targetPosition);
         telemetry.addData("Engage", engage);
-        telemetry.addData("Position", leftMotor.getCurrentPosition() + " " + rightMotor.getCurrentPosition());
+        if ( leftMotor != null && rightMotor != null)
+            telemetry.addData("Position", leftMotor.getCurrentPosition() + " " + rightMotor.getCurrentPosition());
     }
 
     @Override
@@ -61,12 +39,10 @@ public class EncoderCalibrate extends OpMode {
         }
         else if (!engage && gamepad1.y) {
 
-            //leftMotor.setTargetPosition(targetPosition);
-            //rightMotor.setTargetPosition(targetPosition);
-            leftMotor.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
-            rightMotor.setMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
-            leftMotor.setPower(0.1);
-            rightMotor.setPower(0.1);
+            resetEncoders();
+            setDriveMode(DcMotorController.RunMode.RUN_USING_ENCODERS);
+            setDrivePower(0.25);
+
             engage = true;
         }
         else if (engage)
@@ -75,11 +51,9 @@ public class EncoderCalibrate extends OpMode {
             int rightpos = rightMotor.getCurrentPosition();
             if ( leftpos > targetPosition || rightpos > targetPosition)
             {
-                leftMotor.setPower(0);
-                rightMotor.setPower(0);
+                // stop motor
+                setDrivePower(0);
 
-                leftMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
-                rightMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
                 engage = false;
             }
         }
