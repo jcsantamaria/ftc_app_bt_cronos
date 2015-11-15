@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 /**
  * Base class for the op-modes for the Clock robot (FTC team 9785 / Cronos).
@@ -137,11 +138,36 @@ public class ClockBotHardware extends OpMode {
             rightMotor.setMode(mode);
     }
 
+    /**
+     * Set the power for both drive motors using the specified value.
+     *
+     * @param power     the power level
+     */
     void setDrivePower(double power) {
+        //Clip the power values so that it only goes from -1 to 1
+        power = Range.clip(power, -1,1);
+
         if ( leftMotor != null )
             leftMotor.setPower(power);
         if ( rightMotor != null)
             rightMotor.setPower(power);
+    }
+
+    /**
+     * Set the power for both drive motors using the specified values.
+     *
+     * @param leftPower     the power level of the left drive motor
+     * @param rightPower    the power level of the right drive motor
+     */
+    void setDrivePower(double leftPower, double rightPower) {
+        //Clip the power values so that it only goes from -1 to 1
+        leftPower = Range.clip(leftPower, -1,1);
+        rightPower = Range.clip(rightPower, -1,1);
+
+        if ( leftMotor != null )
+            leftMotor.setPower(leftPower);
+        if ( rightMotor != null)
+            rightMotor.setPower(rightPower);
     }
 
     /*
