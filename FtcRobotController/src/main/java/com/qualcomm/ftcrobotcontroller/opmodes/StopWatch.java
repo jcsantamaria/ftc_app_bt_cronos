@@ -15,13 +15,13 @@ public class StopWatch {
      * Initializes a new stopwatch.
      */
     public StopWatch() {
-        Start();
+        reset();
     }
 
     /**
      * Resets the counter.
      */
-    public void Start() {
+    public void reset() {
         start = System.currentTimeMillis();
     }
 
