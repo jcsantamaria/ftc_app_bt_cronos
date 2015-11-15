@@ -15,46 +15,30 @@ enum RobotState {
 /**
  * Simple autonomous behavior that moves the robot in a rectangle.
  */
-public class AutoMode extends OpMode{
+public class AutoMode extends ClockBotHardware{
 
     final double FORWARD_SPEED = 0.30;
     final double TURN_SPEED = 0.15;
-    final long MOVEFORWARD_DURATION = 4000;
-    final long TURNLEFT_DURATION    = 2000;
-
-    DcMotor leftMotor;
-    DcMotor rightMotor;
-    DcMotor armMotor;
-    Servo leftGrip;
-    Servo rightGrip;
+    final double MOVEFORWARD_DURATION = 4;
+    final double TURNLEFT_DURATION    = 2;
+    final double SQUELCH_DURATION = 0.5;
 
     RobotState state;
-    long timestamp;
-    long moveForwardDuration = MOVEFORWARD_DURATION;
-    long turnLeftDuration    = TURNLEFT_DURATION;
+    StopWatch stopWatch;
+    double moveForwardDuration = MOVEFORWARD_DURATION;
+    double turnLeftDuration    = TURNLEFT_DURATION;
+    StopWatch squelch;
 
     @Override
-    public void init() {
-        //Get references to the motors and servos from the hardware map
-        leftMotor = hardwareMap.dcMotor.get("left_drive");
-        rightMotor = hardwareMap.dcMotor.get("right_drive");
-        armMotor = hardwareMap.dcMotor.get("arm_drive");
-        //leftGrip = hardwareMap.servo.get("left_grip");
-        //rightGrip = hardwareMap.servo.get("right_grip");
-
-        //Reverse the right motor
-        rightMotor.setDirection(DcMotor.Direction.REVERSE);
-
-        //Set running mode
-        leftMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
-        rightMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+    public void start() {
 
         // initialze the state and timestamp
         moveForwardDuration = 1140;
         turnLeftDuration    = 1520;
 
         state = RobotState.MoveForward;
-        timestamp = -1;
+        stopWatch = new StopWatch();
+        squelch = new StopWatch();
     }
 
     @Override
@@ -64,64 +48,54 @@ public class AutoMode extends OpMode{
         {
             case MoveForward:
                 {
-                    // set the timestamp the first time we get in this state
-                    if ( timestamp < 0 )
-                        timestamp = System.currentTimeMillis();
-
                     // set  motors to move forward
-                    leftMotor.setPower(FORWARD_SPEED);
-                    rightMotor.setPower(FORWARD_SPEED);
+                    setDrivePower(FORWARD_SPEED);
 
                     // check condition to switch
-                    long elapsed = System.currentTimeMillis() - timestamp;
-                    if ( elapsed > moveForwardDuration)
+                    if ( stopWatch.elapsedTime() > moveForwardDuration)
                     {
                         state = RobotState.TurnLeft;
-                        timestamp = -1;
+                        stopWatch.reset();
                     }
                 }
                 break;
 
             case TurnLeft:
                 {
-
-                    // set the timestamp the first time we get in this state
-                    if ( timestamp < 0 )
-                        timestamp = System.currentTimeMillis();
-
                     // set motors to turn left
-                    leftMotor.setPower(-TURN_SPEED);
-                    rightMotor.setPower(TURN_SPEED);
+                    setDrivePower(-TURN_SPEED, TURN_SPEED);
 
                     //check condition to switch
-                    long elapsed = System.currentTimeMillis() - timestamp;
-                    if ( elapsed > turnLeftDuration)
+                    if ( stopWatch.elapsedTime() > turnLeftDuration)
                     {
                         state = RobotState.MoveForward;
-                        timestamp = -1;
+                        stopWatch.reset();
                     }
                 }
                 break;
         }
 
         // adjust the move forward duration using the up/down dpad
-        if ( gamepad1.dpad_down ) {
-            moveForwardDuration = Math.max(moveForwardDuration - 10, 100);
+        if ( gamepad1.dpad_down && squelch.elapsedTime() > SQUELCH_DURATION) {
+            moveForwardDuration = Math.max(moveForwardDuration - 0.01, 0.1);
+            squelch.reset();
         }
-        if ( gamepad1.dpad_up ) {
-            moveForwardDuration = Math.min(moveForwardDuration + 10, MOVEFORWARD_DURATION);
+        if ( gamepad1.dpad_up && squelch.elapsedTime() > SQUELCH_DURATION) {
+            moveForwardDuration = Math.min(moveForwardDuration + 0.01, 2 * MOVEFORWARD_DURATION);
+            squelch.reset();
         }
 
         // adjust the turn left duration using the left/right dpad
-        if ( gamepad1.dpad_left ) {
-            turnLeftDuration = Math.max(turnLeftDuration - 10, 100);
+        if ( gamepad1.dpad_left && squelch.elapsedTime() > SQUELCH_DURATION ) {
+            turnLeftDuration = Math.max(turnLeftDuration - 0.01, 0.1);
+            squelch.reset();
         }
-        if ( gamepad1.dpad_right ) {
-            turnLeftDuration = Math.min(turnLeftDuration + 10, TURNLEFT_DURATION);
+        if ( gamepad1.dpad_right && squelch.elapsedTime() > SQUELCH_DURATION) {
+            turnLeftDuration = Math.min(turnLeftDuration + 0.01, 2 * TURNLEFT_DURATION);
+            squelch.reset();
         }
 
-        long elapsed = System.currentTimeMillis() - timestamp;
-        telemetry.addData("State", state.toString() + "  elapsed: " + elapsed);
+        telemetry.addData("State", String.format("%s  elapsed: %.3f", state, stopWatch.elapsedTime()));
         telemetry.addData("Forward", moveForwardDuration);
         telemetry.addData("Turn", turnLeftDuration);
     }
