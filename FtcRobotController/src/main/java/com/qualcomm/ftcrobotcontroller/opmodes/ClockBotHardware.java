@@ -86,8 +86,8 @@ public class ClockBotHardware extends OpMode {
         closeGripper();
 
         //Prepare drive
-        setDriveMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
         resetEncoders();
+        setDriveMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
 
         //Report status
         telemetry.addData("Status", sb.toString());
