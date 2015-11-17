@@ -1,22 +1,18 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
-import com.qualcomm.robotcore.hardware.Servo;
-
-import java.util.Date;
-
 
 /**
- * Simple autonomous behavior that moves the robot in a rectangle.
+ * OpMode to go to the beacon.
  */
-public class AutoMode extends ClockBotHardware{
+public class BeaconMode extends ClockBotHardware {
+
     enum RobotState {
         MoveForward,
-        TurnLeft
+        TurnLeft,
+        MoveToLine,
+        PressButton
     }
-
     final double FORWARD_SPEED = 0.30;
     final double TURN_SPEED = 0.15;
     final double MOVEFORWARD_DURATION = 4;
@@ -29,50 +25,54 @@ public class AutoMode extends ClockBotHardware{
     double turnLeftDuration    = TURNLEFT_DURATION;
     StopWatch squelch;
 
-    @Override
     public void start() {
 
         // initialze the state and timestamp
         moveForwardDuration = 1140;
-        turnLeftDuration    = 1520;
+        turnLeftDuration = 1520;
 
         state = RobotState.MoveForward;
         stopWatch = new StopWatch();
         squelch = new StopWatch();
     }
 
-    @Override
     public void loop() {
 
         switch ( state )
         {
             case MoveForward:
-                {
-                    // set  motors to move forward
-                    setDrivePower(FORWARD_SPEED);
+            {
+                // set  motors to move forward
+                setDrivePower(FORWARD_SPEED);
 
-                    // check condition to switch
-                    if ( stopWatch.elapsedTime() > moveForwardDuration)
-                    {
-                        state = RobotState.TurnLeft;
-                        stopWatch.reset();
-                    }
+                // check condition to switch
+                if ( stopWatch.elapsedTime() > moveForwardDuration)
+                {
+                    state = RobotState.TurnLeft;
+                    stopWatch.reset();
                 }
-                break;
+            }
+            break;
 
             case TurnLeft:
-                {
-                    // set motors to turn left
-                    setDrivePower(-TURN_SPEED, TURN_SPEED);
+            {
+                // set motors to turn left
+                setDrivePower(-TURN_SPEED, TURN_SPEED);
 
-                    //check condition to switch
-                    if ( stopWatch.elapsedTime() > turnLeftDuration)
-                    {
-                        state = RobotState.MoveForward;
-                        stopWatch.reset();
-                    }
+                //check condition to switch
+                if ( stopWatch.elapsedTime() > turnLeftDuration)
+                {
+                    state = RobotState.MoveForward;
+                    stopWatch.reset();
                 }
-                break;
+            }
+            break;
+
+            case MoveToLine:
+            {
+                setDrivePower(FORWARD_SPEED,FORWARD_SPEED);
+            }
+
         }
 
         // adjust the move forward duration using the up/down dpad
@@ -95,9 +95,8 @@ public class AutoMode extends ClockBotHardware{
             squelch.reset();
         }
 
-        telemetry.addData("State", String.format("%s  elapsed: %.3f", state, stopWatch.elapsedTime()));
         telemetry.addData("Forward", moveForwardDuration);
         telemetry.addData("Turn", turnLeftDuration);
+        telemetry.addData("State", String.format("%s  elapsed: %.3f", state, stopWatch.elapsedTime()));
     }
-
 }
