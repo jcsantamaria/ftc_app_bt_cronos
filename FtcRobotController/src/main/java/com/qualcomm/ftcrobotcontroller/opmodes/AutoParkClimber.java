@@ -1,0 +1,143 @@
+package com.qualcomm.ftcrobotcontroller.opmodes;
+
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
+
+/**
+ * OpMode to autonomously park the robot.
+ */
+public class AutoParkClimber extends ClockBotHardware{
+    enum RobotState
+    {
+        MoveForwardShort,
+        TurnLeft,
+        MoveForwardLong,
+        Stop
+    }
+
+    final double FORWARD_SPEED = 0.30;
+    final double TURN_SPEED = -0.15;
+    final double MOVEFORWARDSHORT_DURATION = 2;
+    final double TURNLEFT_DURATION    = 1.1;
+    final double MOVEFORWARDLONG_DURATION = 3.8;
+
+    final double SQUELCH_DURATION = 0.5;
+
+    OpticalDistanceSensor opticalDistanceSensor;
+
+    RobotState state;
+    StopWatch stopWatch;
+    double moveForwardLongDuration;
+    double moveForwardShortDuration;
+    double turnLeftDuration;
+    StopWatch squelch;
+
+    @Override
+    public void start() {
+
+        // initialze the state and timestamp
+        moveForwardShortDuration = MOVEFORWARDSHORT_DURATION;
+        turnLeftDuration         = TURNLEFT_DURATION;
+        moveForwardLongDuration  = MOVEFORWARDLONG_DURATION;
+
+        opticalDistanceSensor = hardwareMap.opticalDistanceSensor.get("distance_sensor");
+        //opticalDistanceSensor.enableLed(true);
+
+        state = RobotState.Stop;
+        stopWatch = new StopWatch();
+        squelch = new StopWatch();
+    }
+
+    @Override
+    public void init_loop() {
+        // adjust the move forward duration using the up/down dpad
+        if ( gamepad1.dpad_down && squelch.elapsedTime() > SQUELCH_DURATION) {
+            moveForwardShortDuration = Math.max(moveForwardShortDuration - 0.01, 0.1);
+            squelch.reset();
+        }
+        if ( gamepad1.dpad_up && squelch.elapsedTime() > SQUELCH_DURATION) {
+            moveForwardShortDuration = Math.min(moveForwardShortDuration + 0.01, 2 * MOVEFORWARDSHORT_DURATION);
+            squelch.reset();
+        }
+
+        // adjust the turn left duration using the left/right dpad
+        if ( gamepad1.dpad_left && squelch.elapsedTime() > SQUELCH_DURATION ) {
+            turnLeftDuration = Math.max(turnLeftDuration - 0.01, 0.1);
+            squelch.reset();
+        }
+        if ( gamepad1.dpad_right && squelch.elapsedTime() > SQUELCH_DURATION) {
+            turnLeftDuration = Math.min(turnLeftDuration + 0.01, 2 * TURNLEFT_DURATION);
+            squelch.reset();
+        }
+
+        // adjust the move forward duration1 using the up/down dpad
+        if ( gamepad1.a && squelch.elapsedTime() > SQUELCH_DURATION) {
+            moveForwardLongDuration = Math.max(moveForwardLongDuration - 0.01, 0.1);
+            squelch.reset();
+        }
+        if ( gamepad1.b && squelch.elapsedTime() > SQUELCH_DURATION) {
+            moveForwardLongDuration = Math.min(moveForwardLongDuration + 0.01, 2 * MOVEFORWARDLONG_DURATION);
+            squelch.reset();
+        }
+
+        telemetry.addData("Forward Short", moveForwardShortDuration);
+        telemetry.addData("Turn", turnLeftDuration);
+        telemetry.addData("Forward Long", moveForwardLongDuration);
+    }
+
+    @Override
+    public void loop() {
+
+        switch ( state )
+        {
+            case MoveForwardShort:
+            {
+                // set  motors to move forward
+                setDrivePower(FORWARD_SPEED);
+
+                // check condition to switch
+                if ( stopWatch.elapsedTime() > moveForwardShortDuration)
+                {
+                    state = RobotState.TurnLeft;
+                    stopWatch.reset();
+                }
+            }
+            break;
+
+            case TurnLeft:
+            {
+                // set motors to turn left
+                setDrivePower(-TURN_SPEED, TURN_SPEED);
+
+                //check condition to switch
+                if ( stopWatch.elapsedTime() > turnLeftDuration)
+                {
+                    state = RobotState.MoveForwardLong;
+                    stopWatch.reset();
+                }
+            }
+            break;
+
+            case MoveForwardLong:
+            {
+                // set  motors to move forward
+                setDrivePower(FORWARD_SPEED);
+
+                // check condition to switch
+                if ( stopWatch.elapsedTime() > moveForwardLongDuration  || opticalDistanceSensor.getLightDetected() > 0.8)
+                {
+                    state = RobotState.Stop ;
+                    stopWatch.reset();
+                }
+            }
+            break;
+
+            case Stop:
+            {
+                setDrivePower(0);
+            }
+        }
+
+        telemetry.addData("State", String.format("%s  elapsed: %.3f", state, stopWatch.elapsedTime()));
+        telemetry.addData("Sensor", String.format("light: %.3f", opticalDistanceSensor.getLightDetected()));
+    }
+}
