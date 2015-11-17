@@ -7,15 +7,15 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import java.util.Date;
 
-enum RobotState {
-        MoveForward,
-        TurnLeft
-}
 
 /**
  * Simple autonomous behavior that moves the robot in a rectangle.
  */
 public class AutoMode extends ClockBotHardware{
+    enum RobotState {
+        MoveForward,
+        TurnLeft
+    }
 
     final double FORWARD_SPEED = 0.30;
     final double TURN_SPEED = 0.15;
