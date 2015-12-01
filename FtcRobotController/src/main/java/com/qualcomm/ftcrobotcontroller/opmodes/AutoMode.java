@@ -33,8 +33,8 @@ public class AutoMode extends ClockBotHardware{
     public void start() {
 
         // initialze the state and timestamp
-        moveForwardDuration = 1140;
-        turnLeftDuration    = 1520;
+        moveForwardDuration = 4;
+        turnLeftDuration    = 2;
 
         state = RobotState.MoveForward;
         stopWatch = new StopWatch();
