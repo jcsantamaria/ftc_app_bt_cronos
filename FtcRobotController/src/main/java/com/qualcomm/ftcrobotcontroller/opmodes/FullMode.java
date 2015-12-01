@@ -16,13 +16,13 @@ public class FullMode extends ClockBotHardware {
         // so we need to reverse the y values
         float xValue = -gamepad1.left_stick_x;
         float yValue = -gamepad1.left_stick_y;
+        float lValue = -gamepad1.right_stick_y;
+
+        lValue = Range.clip((float)scaleInput(lValue), -0.3f, 0.3f);
 
         // arm control
-        if(gamepad1.y) {
-            armMotor.setPower(0.1);
-        }
-        else if(gamepad1.b) {
-            armMotor.setPower(-0.1);
+        if(Math.abs(lValue) > 0.05) {
+            armMotor.setPower(lValue);
         }
         else {
             armMotor.setPower(0);
