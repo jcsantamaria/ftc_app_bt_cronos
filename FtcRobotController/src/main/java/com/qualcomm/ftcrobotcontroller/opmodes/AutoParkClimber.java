@@ -1,6 +1,7 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
+import com.qualcomm.robotcore.util.Range;
 
 /**
  * OpMode to autonomously park the robot.
@@ -16,9 +17,9 @@ public class AutoParkClimber extends ClockBotHardware{
 
     final double FORWARD_SPEED = 0.30;
     final double TURN_SPEED = -0.15;
-    final double MOVEFORWARDSHORT_DURATION = 2;
+    final double MOVEFORWARDSHORT_DURATION = 3.8;
     final double TURNLEFT_DURATION    = 1.1;
-    final double MOVEFORWARDLONG_DURATION = 3.8;
+    final double MOVEFORWARDLONG_DURATION = 3.5;
 
     final double SQUELCH_DURATION = 0.5;
 
@@ -42,7 +43,7 @@ public class AutoParkClimber extends ClockBotHardware{
         opticalDistanceSensor = hardwareMap.opticalDistanceSensor.get("distance_sensor");
         //opticalDistanceSensor.enableLed(true);
 
-        state = RobotState.Stop;
+        state = RobotState.MoveForwardShort;
         stopWatch = new StopWatch();
         squelch = new StopWatch();
     }
@@ -79,13 +80,20 @@ public class AutoParkClimber extends ClockBotHardware{
             squelch.reset();
         }
 
-        telemetry.addData("Forward Short", moveForwardShortDuration);
-        telemetry.addData("Turn", turnLeftDuration);
-        telemetry.addData("Forward Long", moveForwardLongDuration);
+        telemetry.addData("Durations", String.format("%.1f %.1f %.1f",moveForwardShortDuration, turnLeftDuration, moveForwardLongDuration));
     }
 
     @Override
     public void loop() {
+
+        if ( gamepad1.a ) {
+            state = RobotState.Stop;
+            stopWatch.reset();
+        }
+        if ( state == RobotState.Stop && gamepad1.x) {
+            state = RobotState.MoveForwardShort;
+            stopWatch.reset();
+        }
 
         switch ( state )
         {
@@ -134,10 +142,43 @@ public class AutoParkClimber extends ClockBotHardware{
             case Stop:
             {
                 setDrivePower(0);
+
+                if (gamepad1.right_bumper && squelch.elapsedTime() > SQUELCH_DURATION) {
+                    moveForwardShortDuration += 0.1;
+                    moveForwardShortDuration = Range.clip(moveForwardShortDuration, 0.1, 2 * MOVEFORWARDSHORT_DURATION);
+                    squelch.reset();
+                }
+                if (gamepad1.left_bumper && squelch.elapsedTime() > SQUELCH_DURATION) {
+                    moveForwardShortDuration -= 0.1;
+                    moveForwardShortDuration = Range.clip(moveForwardShortDuration, 0.1, 2 * MOVEFORWARDSHORT_DURATION);
+                    squelch.reset();
+                }
+                if (gamepad1.dpad_right && squelch.elapsedTime() > SQUELCH_DURATION) {
+                    turnLeftDuration += 0.1;
+                    turnLeftDuration = Range.clip(turnLeftDuration, 0.1, 2 * TURNLEFT_DURATION);
+                    squelch.reset();
+                }
+                if (gamepad1.dpad_left && squelch.elapsedTime() > SQUELCH_DURATION) {
+                    turnLeftDuration -= 0.1;
+                    turnLeftDuration = Range.clip(turnLeftDuration, 0.1, 2 * TURNLEFT_DURATION);
+                    squelch.reset();
+                }
+                if (gamepad1.dpad_up && squelch.elapsedTime() > SQUELCH_DURATION) {
+                    moveForwardLongDuration += 0.1;
+                    moveForwardLongDuration = Range.clip(moveForwardLongDuration, 0.1, 2 * MOVEFORWARDLONG_DURATION);
+                    squelch.reset();
+                }
+                if (gamepad1.dpad_down && squelch.elapsedTime() > SQUELCH_DURATION) {
+                    moveForwardLongDuration -= 0.1;
+                    moveForwardLongDuration = Range.clip(moveForwardLongDuration, 0.1, 2 * MOVEFORWARDLONG_DURATION);
+                    squelch.reset();
+                }
             }
+            break;
         }
 
         telemetry.addData("State", String.format("%s  elapsed: %.3f", state, stopWatch.elapsedTime()));
-        telemetry.addData("Sensor", String.format("light: %.3f", opticalDistanceSensor.getLightDetected()));
+        telemetry.addData("Durations", String.format("%.1f %.1f %.1f",moveForwardShortDuration, turnLeftDuration, moveForwardLongDuration));
+        //telemetry.addData("Sensor", String.format("light: %.3f", opticalDistanceSensor.getLightDetected()));
     }
 }
