@@ -18,7 +18,7 @@ public class FullMode extends ClockBotHardware {
         float yValue = -gamepad1.left_stick_y;
         float lValue = -gamepad1.right_stick_y;
 
-        lValue = Range.clip((float)scaleInput(lValue), -0.3f, 0.3f);
+        lValue =(float)scaleInput(lValue) * 0.3f;
 
         // arm control
         if(Math.abs(lValue) > 0.05) {
@@ -33,7 +33,8 @@ public class FullMode extends ClockBotHardware {
         float rightPower = yValue - xValue;
 
         //Set the power of the motors with the gamepad values
-        setDrivePower( scaleInput(leftPower), scaleInput(rightPower));
+        float magnitude = 0.75f;
+        setDrivePower( magnitude * scaleInput(leftPower), magnitude * scaleInput(rightPower));
 
         // gripper control
         // This code will open and close the gripper with two buttons
