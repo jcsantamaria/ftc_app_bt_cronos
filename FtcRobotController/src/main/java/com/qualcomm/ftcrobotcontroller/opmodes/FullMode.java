@@ -9,6 +9,12 @@ import com.qualcomm.robotcore.util.Range;
 public class FullMode extends ClockBotHardware {
 
     @Override
+    public void start() {
+        //Set gripper to open
+        openGripper();
+    }
+
+    @Override
     public void loop() {
 
         //Get the values from the gamepads
