@@ -6,9 +6,10 @@ import com.qualcomm.robotcore.util.Range;
 /**
  * OpMode to autonomously park the robot.
  */
-public class AutoParkClimber extends ClockBotHardware{
+public class AutoParkLeft extends ClockBotHardware{
     enum RobotState
     {
+        Wait,
         MoveForwardShort,
         TurnLeft,
         MoveForwardLong,
@@ -18,7 +19,7 @@ public class AutoParkClimber extends ClockBotHardware{
     final double FORWARD_SPEED = 0.30;
     final double TURN_SPEED = -0.15;
     final double MOVEFORWARDSHORT_DURATION = 3.8;
-    final double TURNLEFT_DURATION    = 1.1;
+    final double TURNLEFT_DURATION    = 1.2;
     final double MOVEFORWARDLONG_DURATION = 3.5;
 
     final double SQUELCH_DURATION = 0.5;
@@ -43,7 +44,10 @@ public class AutoParkClimber extends ClockBotHardware{
         opticalDistanceSensor = hardwareMap.opticalDistanceSensor.get("distance_sensor");
         //opticalDistanceSensor.enableLed(true);
 
-        state = RobotState.MoveForwardShort;
+        //Set gripper to open
+        openGripper();
+
+        state = RobotState.Wait;
         stopWatch = new StopWatch();
         squelch = new StopWatch();
     }
@@ -97,6 +101,15 @@ public class AutoParkClimber extends ClockBotHardware{
 
         switch ( state )
         {
+            case Wait:
+            {
+                if (stopWatch.elapsedTime() > 10.0 ) {
+                    state = RobotState.MoveForwardShort;
+                    stopWatch.reset();
+                }
+            }
+            break;
+
             case MoveForwardShort:
             {
                 // set  motors to move forward
