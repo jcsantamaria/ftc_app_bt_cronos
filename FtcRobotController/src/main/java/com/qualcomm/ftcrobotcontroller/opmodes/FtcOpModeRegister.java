@@ -100,7 +100,8 @@ public class FtcOpModeRegister implements OpModeRegister {
     manager.register("FullMode", FullMode.class);
     manager.register("AutoMode", AutoMode.class);
     manager.register("EncoderCalibrate", EncoderCalibrate.class);
-    manager.register("AutoParkClimber", AutoParkClimber.class);
+    manager.register("AutoParkLeft", AutoParkLeft.class);
+    manager.register("AutoParkRight", AutoParkRight.class);
     //manager.register("CullenMode", OpticalDistanceSensor.class);
     //manager.register("FullBot", ExampleFullControl.class);
 }
