@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.util.Range;
 /**
  * OpMode to autonomously park the robot.
  */
-public class AutoParkRight extends ClockBotHardware{
+public class AutoParkRight extends TreadedBotHardware {
     enum RobotState
     {
         Wait,

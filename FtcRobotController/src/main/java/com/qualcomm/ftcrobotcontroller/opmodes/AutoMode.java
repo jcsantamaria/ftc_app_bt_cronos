@@ -1,17 +1,10 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
-import com.qualcomm.robotcore.hardware.Servo;
-
-import java.util.Date;
-
 
 /**
  * Simple autonomous behavior that moves the robot in a rectangle.
  */
-public class AutoMode extends ClockBotHardware{
+public class AutoMode extends TreadedBotHardware {
     enum RobotState {
         MoveForward,
         TurnLeft

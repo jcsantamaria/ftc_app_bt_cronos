@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.util.Range;
  * calls to methods will fail, but will not cause the application to crash.
  *
  */
-public class ClockBotHardware extends OpMode {
+public class TreadedBotHardware extends OpMode {
 
     final double LEFT_OPEN_POSITION = 0.0;
     final double LEFT_CLOSED_POSITION = 0.5;

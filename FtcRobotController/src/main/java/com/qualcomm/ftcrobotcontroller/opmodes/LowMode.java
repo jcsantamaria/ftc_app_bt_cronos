@@ -1,11 +1,9 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
-import java.util.Set;
-
 /**
  * OpMode to park on the mountain.
  */
-public class LowMode extends ClockBotHardware {
+public class LowMode extends TreadedBotHardware {
 
     enum RobotState {
         MoveForward,

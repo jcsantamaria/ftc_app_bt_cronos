@@ -1,11 +1,9 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-
 /**
  * OpMode to go to the beacon.
  */
-public class BeaconMode extends ClockBotHardware {
+public class BeaconMode extends TreadedBotHardware {
 
     enum RobotState {
         MoveForward,

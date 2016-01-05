@@ -1,15 +1,11 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 /**
  * OpMode to calibrate gripper.
  */
-public class GripCalibrate extends ClockBotHardware {
+public class GripCalibrate extends TreadedBotHardware {
 
     final double SQUELCH_DURATION = 0.5;
 

@@ -97,7 +97,7 @@ public class FtcOpModeRegister implements OpModeRegister {
     //manager.register("ChristianMode", SingleMotor.class);
     //manager.register("RickyMode", FeelsSensor.class);
     //manager.register("DualDrive", DualMotorDrive.class);
-    manager.register("FullMode", FullMode.class);
+    manager.register("WheeledFullMode", WheeledFullMode.class);
     manager.register("AutoMode", AutoMode.class);
     manager.register("EncoderCalibrate", EncoderCalibrate.class);
     manager.register("AutoParkLeft", AutoParkLeft.class);
