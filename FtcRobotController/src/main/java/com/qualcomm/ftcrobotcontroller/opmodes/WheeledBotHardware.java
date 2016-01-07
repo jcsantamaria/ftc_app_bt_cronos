@@ -134,7 +134,7 @@ public class WheeledBotHardware extends OpMode {
     }
 
     /**
-     * Lift the arm with the specified power: positive value raises the arm.
+     * Move the arm with the specified power: positive value raises the arm.
      * @param power     the power level
      */
     void moveArm(double power) {
