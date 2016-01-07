@@ -22,10 +22,10 @@ public class WheeledFullMode extends WheeledBotHardware {
 
         // arm control
         if(Math.abs(lValue) > 0.05) {
-            armMotor.setPower(lValue);
+            liftArm(lValue);
         }
         else {
-            armMotor.setPower(0);
+            stopArm();
         }
 
         //Calculate the power needed for each motor
