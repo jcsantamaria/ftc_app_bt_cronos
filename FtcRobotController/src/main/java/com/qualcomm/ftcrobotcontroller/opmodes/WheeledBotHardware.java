@@ -91,9 +91,11 @@ public class WheeledBotHardware extends OpMode {
             sb.append("ERR ");
         }
 
-        //Reverse the right motor
+        //Reverse the right-side motors
         if (rightRearMotor != null)
             rightRearMotor.setDirection(DcMotor.Direction.REVERSE);
+        if (rightFrontMotor != null)
+            rightFrontMotor.setDirection(DcMotor.Direction.REVERSE);
 
         //Set gripper to close
         closeGripper();
@@ -129,6 +131,27 @@ public class WheeledBotHardware extends OpMode {
             leftGrip.setPosition(LEFT_CLOSED_POSITION);
         if (rightGrip != null)
             rightGrip.setPosition(RIGHT_CLOSED_POSITION);
+    }
+
+    /**
+     * Lift the arm with the specified power.
+     * @param power     the power level
+     */
+    void liftArm(double power) {
+        //Clip the power values so that it only goes from -1 to 1
+        power = Range.clip(power, -1,1);
+
+        if ( armMotor != null)
+            armMotor.setPower(power);
+    }
+
+
+    /**
+     * Stop arm movement.
+     */
+    void stopArm() {
+        if ( armMotor != null)
+            armMotor.setPower(0);
     }
 
     /**
@@ -168,14 +191,14 @@ public class WheeledBotHardware extends OpMode {
         //Clip the power values so that it only goes from -1 to 1
         power = Range.clip(power, -1,1);
 
-        if ( leftFrontMotor != null)
-            leftFrontMotor.setPower(power);
         if ( leftRearMotor != null )
             leftRearMotor.setPower(power);
-        if ( rightFrontMotor != null)
-            rightFrontMotor.setPower(power);
+        if ( leftFrontMotor != null)
+            leftFrontMotor.setPower(power);
         if ( rightRearMotor != null)
             rightRearMotor.setPower(power);
+        if ( rightFrontMotor != null)
+            rightFrontMotor.setPower(power);
     }
 
     /**
