@@ -3,6 +3,7 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
+import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
@@ -28,6 +29,7 @@ public class WheeledBotHardware extends OpMode {
     DcMotor armMotor;
     Servo leftGrip;
     Servo rightGrip;
+    GyroSensor gyroSensor;
 
     @Override
     public void init() {
@@ -85,6 +87,14 @@ public class WheeledBotHardware extends OpMode {
         sb.append("right_grip: ");
         try {
             rightGrip = hardwareMap.servo.get("right_grip");
+            sb.append("OK ");
+        }
+        catch (Exception ex) {
+            sb.append("ERR ");
+        }
+        sb.append("gyro ");
+        try {
+            gyroSensor = hardwareMap.gyroSensor.get("gyro");
             sb.append("OK ");
         }
         catch (Exception ex) {
