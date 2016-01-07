@@ -134,10 +134,10 @@ public class WheeledBotHardware extends OpMode {
     }
 
     /**
-     * Lift the arm with the specified power.
+     * Lift the arm with the specified power: positive value raises the arm.
      * @param power     the power level
      */
-    void liftArm(double power) {
+    void moveArm(double power) {
         //Clip the power values so that it only goes from -1 to 1
         power = Range.clip(power, -1,1);
 

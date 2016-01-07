@@ -22,7 +22,7 @@ public class WheeledFullMode extends WheeledBotHardware {
 
         // arm control
         if(Math.abs(lValue) > 0.05) {
-            liftArm(lValue);
+            moveArm(lValue);
         }
         else {
             stopArm();
