@@ -17,6 +17,9 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class WheeledBotHardware extends OpMode {
 
+    final double PI = 3.1415926535897932384626433832795;
+    final double RAD2DEG = 180.0 / PI;
+    final double DEG2RAD = PI / 180.0;
     final double LEFT_OPEN_POSITION = 0.0;
     final double LEFT_CLOSED_POSITION = 0.5;
     final double RIGHT_OPEN_POSITION = 1.0;
@@ -31,6 +34,20 @@ public class WheeledBotHardware extends OpMode {
     Servo rightGrip;
     GyroSensor gyroSensor;
 
+    private int prevLeftRearStep;
+    private int prevLeftFrontStep;
+    private int prevRightRearStep;
+    private int prevRightFrontStep;
+    
+    /**
+     * Absolute position of the robot in the x-axis.
+     */
+    public double positionX;
+    /**
+     * Absolute position of the robot in the y-axis.
+     */
+    public double positionY;
+    
     @Override
     public void init() {
 
@@ -176,8 +193,69 @@ public class WheeledBotHardware extends OpMode {
             rightRearMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
         if (rightFrontMotor != null)
             rightFrontMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+        
+        // reset relative variables
+        prevLeftRearStep = 0;
+        prevLeftFrontStep = 0;
+        prevRightRearStep = 0;
+        prevRightFrontStep = 0;
     }
 
+    /**
+     * Use the motor encoders and the gyro sensor to update the absolute position of the robot.
+     */
+    void updatePosition()
+    {
+        double distance = 0;
+        int motors = 0;
+        int leftRearStep = 0;
+        int leftFrontStep = 0;
+        int rightRearStep = 0;
+        int rightFrontStep = 0;
+        if ( leftRearMotor != null) {
+            leftRearStep = leftRearMotor.getCurrentPosition();
+            distance +=  leftRearStep - prevLeftRearStep;
+            motors += 1;
+        }
+        if ( leftFrontMotor != null) {
+            leftFrontStep = leftFrontMotor.getCurrentPosition();
+            distance +=  leftFrontStep - prevLeftFrontStep;
+            motors += 1;
+        }
+        if ( rightRearMotor != null) {
+            rightRearStep = rightRearMotor.getCurrentPosition();
+            distance +=  rightRearStep - prevRightRearStep;
+            motors += 1;
+        }
+        if ( rightFrontMotor != null) {
+            rightFrontStep = rightFrontMotor.getCurrentPosition();
+            distance +=  rightFrontStep - prevRightFrontStep;
+            motors += 1;
+        }
+
+        if ( motors > 0 && gyroSensor != null ) {
+            // compute average of distance
+            distance = distance / motors;
+
+            // read angle
+            double angle = gyroSensor.getHeading() * DEG2RAD;
+
+            // compute displacement
+            double dx = distance * Math.cos(angle);
+            double dy = distance * Math.sin(angle);
+
+            // update position
+            positionX = positionX + dx;
+            positionY = positionY + dy;
+        }
+
+        // prepare for next reading
+        prevLeftRearStep = leftRearStep;
+        prevLeftFrontStep = leftFrontStep;
+        prevRightRearStep = rightRearStep;
+        prevRightFrontStep = rightFrontStep;
+    }
+    
     /**
      * Set the drive motors to the specified mode.
      */
