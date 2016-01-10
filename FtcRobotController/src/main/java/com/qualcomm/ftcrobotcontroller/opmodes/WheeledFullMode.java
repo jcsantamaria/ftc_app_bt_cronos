@@ -2,34 +2,17 @@ package com.qualcomm.ftcrobotcontroller.opmodes;
 
 public class WheeledFullMode extends WheeledBotHardware {
 
-     public double _posx;
-     public double _posy;
-
-
-
     @Override
     public void start() {
         //Set gripper to open
         openGripper();
-
-        _posx = 0;
-        _posy = 0;
-
     }
-
 
     @Override
     public void loop() {
 
-
-        double distance = (leftRearMotor.getCurrentPosition() + leftFrontMotor.getCurrentPosition() + rightFrontMotor.getCurrentPosition() + rightRearMotor.getCurrentPosition()) / 4;
-        double angle =  0; //gyroSensor.getHeading() * 3.141592657172 / 180.0;
-
-        double dx = distance * Math.cos(angle);
-        double dy = distance * Math.sin(angle);
-
-        _posx = _posx + dx;
-        _posy = _posy + dy;
+        // update absolution position
+        updatePosition();
 
         //Get the values from the gamepads
         //Note: pushing the stick all the way up returns -1,
@@ -65,8 +48,8 @@ public class WheeledFullMode extends WheeledBotHardware {
             closeGripper();
         }
 
-        telemetry.addData("posx ",_posx);
-        telemetry.addData("poy ",_posy);
+        telemetry.addData("posx ",positionX);
+        telemetry.addData("posy ",positionY);
 
     }
 }
