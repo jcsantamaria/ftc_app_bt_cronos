@@ -241,8 +241,8 @@ public class WheeledBotHardware extends OpMode {
             double angle = gyroSensor.getHeading() * DEG2RAD;
 
             // compute displacement
-            double dx = distance * Math.cos(angle);
-            double dy = distance * Math.sin(angle);
+            double dx = distance * Math.sin(angle);
+            double dy = distance * Math.cos(angle);
 
             // update position
             positionX = positionX + dx;
