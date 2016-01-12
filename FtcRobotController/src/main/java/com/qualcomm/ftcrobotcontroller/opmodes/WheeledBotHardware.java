@@ -129,6 +129,7 @@ public class WheeledBotHardware extends OpMode {
 
         //Prepare drive
         resetEncoders();
+        resetPosition();
         setDriveMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
 
         //Report status
@@ -193,12 +194,24 @@ public class WheeledBotHardware extends OpMode {
             rightRearMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
         if (rightFrontMotor != null)
             rightFrontMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
-        
+
+        if ( gyroSensor != null)
+            gyroSensor.resetZAxisIntegrator();
+    }
+
+    /**
+     * Reset the position to origin.
+     */
+    void resetPosition() {
         // reset relative variables
         prevLeftRearStep = 0;
         prevLeftFrontStep = 0;
         prevRightRearStep = 0;
         prevRightFrontStep = 0;
+
+        // reset absolute variables
+        positionX = 0.0;
+        positionY = 0.0;
     }
 
     /**
@@ -235,10 +248,13 @@ public class WheeledBotHardware extends OpMode {
 
         if ( motors > 0 && gyroSensor != null ) {
             // compute average of distance
-            distance = distance / motors;
+            distance = -distance / motors;
 
             // read angle
-            double angle = gyroSensor.getHeading() * DEG2RAD;
+            int raw = gyroSensor.getHeading();
+            double angle = raw * DEG2RAD;
+
+            //telemetry.addData("raw", String.format("%d %.0f", raw, distance));
 
             // compute displacement
             double dx = distance * Math.sin(angle);
@@ -254,6 +270,9 @@ public class WheeledBotHardware extends OpMode {
         prevLeftFrontStep = leftFrontStep;
         prevRightRearStep = rightRearStep;
         prevRightFrontStep = rightFrontStep;
+
+        //telemetry.addData("front", String.format("%d %d", -leftFrontStep, -rightFrontStep));
+        //telemetry.addData("rear", String.format("%d %d", -leftRearStep, -rightRearStep));
     }
     
     /**
