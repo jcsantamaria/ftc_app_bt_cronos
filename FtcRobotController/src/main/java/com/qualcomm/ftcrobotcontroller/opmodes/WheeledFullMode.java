@@ -4,6 +4,10 @@ public class WheeledFullMode extends WheeledBotHardware {
 
     @Override
     public void start() {
+
+        // always reset position
+        //resetPosition();
+
         //Set gripper to open
         openGripper();
     }
@@ -35,7 +39,7 @@ public class WheeledFullMode extends WheeledBotHardware {
         float rightPower = yValue - xValue;
 
         //Set the power of the motors with the gamepad values
-        float magnitude = 0.75f;
+        float magnitude = 0.5f;
         setDrivePower(magnitude * scaleInput(leftPower), magnitude * scaleInput(rightPower));
 
         // gripper control
@@ -48,9 +52,8 @@ public class WheeledFullMode extends WheeledBotHardware {
             closeGripper();
         }
 
-        telemetry.addData("posx ",positionX);
-        telemetry.addData("posy ",positionY);
-
+        //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
+        telemetry.addData("pos", String.format("%.0f %.0f", positionX, positionY));
     }
 }
 
