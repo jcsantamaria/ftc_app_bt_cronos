@@ -1,12 +1,14 @@
 package com.qualcomm.ftcrobotcontroller.opmodes;
 
+import com.qualcomm.robotcore.hardware.DcMotorController;
+
 public class WheeledFullMode extends WheeledBotHardware {
 
     @Override
     public void start() {
 
-        // always reset position
-        //resetPosition();
+        //Set drive mode
+        setDriveMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
 
         //Set gripper to open
         openGripper();
