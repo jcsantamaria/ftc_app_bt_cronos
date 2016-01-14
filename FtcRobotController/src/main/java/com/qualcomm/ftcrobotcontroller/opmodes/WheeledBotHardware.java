@@ -129,8 +129,6 @@ public class WheeledBotHardware extends OpMode {
 
         //Prepare drive
         resetEncoders();
-        resetPosition();
-        setDriveMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
 
         //Report status
         telemetry.addData("Status", sb.toString());
@@ -197,6 +195,16 @@ public class WheeledBotHardware extends OpMode {
 
         if ( gyroSensor != null)
             gyroSensor.resetZAxisIntegrator();
+
+        // reset relative variables
+        prevLeftRearStep = 0;
+        prevLeftFrontStep = 0;
+        prevRightRearStep = 0;
+        prevRightFrontStep = 0;
+
+        // reset absolute variables
+        positionX = 0.0;
+        positionY = 0.0;
     }
 
     /**
