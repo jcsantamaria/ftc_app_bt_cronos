@@ -9,19 +9,25 @@ import com.qualcomm.robotcore.util.Range;
  * OpMode to autonomously park the robot.
  */
 public class AutoWheeled extends WheeledBotHardware {
+    final double ARM_LOWER_POWER =-0.02;
+    final double ARM_RAISE_POWER = 0.08;
+    final int    ARM_SET_POSITION = 820;
+    final double DRIVE_POWER = 0.08;
+
     enum RobotState
     {
-        Wait,
+        LowerArm,
+        RaiseArm,
+
         Waypoint1,
         Waypoint2,
         Stop
     }
 
-    float targetx1;
-    float targety1;
-    float targetx2;
-    float targety2;
-    //OpticalDistanceSensor opticalDistanceSensor;
+    double targetx1 = 0;
+    double targety1 = 2200;
+    double targetx2 = 2200;
+    double targety2 = 2200;
 
     RobotState state;
     StopWatch squelch;
@@ -29,22 +35,25 @@ public class AutoWheeled extends WheeledBotHardware {
     @Override
     public void start() {
 
-        // initialze the state, gyro, ods and timestamp
-        //opticalDistanceSensor = hardwareMap.opticalDistanceSensor.get("distance_sensor");
-        //opticalDistanceSensor.enableLed(true);
-
+        // do what our parent says first
+        super.start();
 
         //Set drive mode
         setDriveMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
 
+        //Set drive mode
+        setArmMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
 
-        state = RobotState.Wait;
+        state = RobotState.LowerArm;
         squelch = new StopWatch();
     }
 
 
     @Override
     public void loop() {
+
+        // do what our parent says first
+        super.loop();
 
         if ( gamepad1.a ) {
             state = RobotState.Stop;
@@ -55,9 +64,23 @@ public class AutoWheeled extends WheeledBotHardware {
 
         switch ( state )
         {
-            case Wait:
+            case LowerArm:
             {
-                if (gamepad1.a) {
+                moveArm(ARM_LOWER_POWER);
+
+                if ( onArmReset ) {
+                    state = RobotState.RaiseArm;
+                }
+            }
+            break;
+
+            case RaiseArm:
+            {
+                if ( armMotor.getCurrentPosition() < ARM_SET_POSITION ) {
+                    moveArm(ARM_RAISE_POWER);
+                }
+                else {
+                    stopArm();
                     state = RobotState.Waypoint1;
                 }
             }
@@ -65,55 +88,53 @@ public class AutoWheeled extends WheeledBotHardware {
 
             case Waypoint1:
             {
+                // compute delta vector
+                double dx = targetx1 - positionX;
+                double dy = targety1 - positionY;
 
-
-                float dx = targetx1 - (float)positionX;
-                float dy = targety1 - (float)positionY;
-
+                // normalize
+                double norm = Math.sqrt(dx * dx + dy * dy);
+                dx = dx / norm;
+                dy = dy / norm;
 
                 //Calculate the power needed for each motor
-                float leftPower = dy + dx;
-                float rightPower = dy - dx;
-
+                double leftPower  = dy + dx;
+                double rightPower = dy - dx;
 
                 //set value to be less so it's not going crazy
-                float magnitude = 0.5f;
-                setDrivePower(magnitude * (leftPower), magnitude * (rightPower));
+                double magnitude = DRIVE_POWER;
+                setDrivePower(magnitude * leftPower, magnitude * rightPower);
 
-               if (Math.abs(dx)<= 100 && Math.abs(dy)<= 100)
-                {
+               if (norm < 100) {
                     state = RobotState.Waypoint2;
-                }
-
-
+               }
             }
             break;
 
             case Waypoint2:
             {
+                // compute delta vector
+                double dx = targetx1 - positionX;
+                double dy = targety1 - positionY;
 
-                float dx1 = targetx2 - (float)positionX;
-                float dy1 = targety2 - (float)positionY;
-
+                // normalize
+                double norm = Math.sqrt(dx * dx + dy * dy);
+                dx = dx / norm;
+                dy = dy / norm;
 
                 //Calculate the power needed for each motor
-                float leftPower = dy1 + dx1;
-                float rightPower = dy1 - dx1;
-
+                double leftPower  = dy + dx;
+                double rightPower = dy - dx;
 
                 //set value to be less so it's not going crazy
-                float magnitude = 0.5f;
-                setDrivePower(magnitude * (leftPower), magnitude * (rightPower));
+                double magnitude = DRIVE_POWER;
+                setDrivePower(magnitude * leftPower, magnitude * rightPower);
 
-                if (Math.abs(dx1)<= 100 && Math.abs(dy1)<= 100)
-                {
+                if (norm < 100) {
                     state = RobotState.Stop;
-
                 }
             }
             break;
-
-
 
             case Stop:
             {
@@ -123,7 +144,8 @@ public class AutoWheeled extends WheeledBotHardware {
             break;
         }
 
-
-        //telemetry.addData("Sensor", String.format("light: %.3f", opticalDistanceSensor.getLightDetected()));
+        telemetry.addData("state", state.toString());
+        telemetry.addData("pos", String.format("%.0f %.0f", positionX, positionY));
+        telemetry.addData("arm", String.format("%s %.2f %d %s", onArmReset, armMotor.getPower(), armMotor.getCurrentPosition(), armMotor.getMode().toString()));
     }
 }
