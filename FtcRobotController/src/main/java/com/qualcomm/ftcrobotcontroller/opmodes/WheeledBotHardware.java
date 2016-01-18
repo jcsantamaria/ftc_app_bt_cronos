@@ -161,7 +161,24 @@ public class WheeledBotHardware extends OpMode {
 
     @Override
     public void loop() {
+        // on arm reset, keep changing drive mode until ready
+        DcMotorController.RunMode mode = armMotor.getMode();
+        if ( onArmReset ) {
+            // force a reset until we detect a position==0
+            if ( mode != DcMotorController.RunMode.RESET_ENCODERS || armMotor.getCurrentPosition() != 0)
+                armMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+
+            // signal reset done when ready
+            if ( mode == DcMotorController.RunMode.RESET_ENCODERS && armMotor.getCurrentPosition() == 0) {
+                onArmReset = false;
+            }
+        }
+        else if (mode != DcMotorController.RunMode.RUN_WITHOUT_ENCODERS) {
+            // force a power mode until we detect it
+            armMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+        }
     }
+
 
     /**
      * Set the gripper to open position.
@@ -191,10 +208,11 @@ public class WheeledBotHardware extends OpMode {
         //Clip the power values so that it only goes from -1 to 1
         power = Range.clip(power, -1,1);
 
-        if ( armMotor != null ) {
-            boolean atLimit = armTouch != null && armTouch.isPressed();
+        if ( armMotor != null && armMotor.getMode() == DcMotorController.RunMode.RUN_WITHOUT_ENCODERS ) {
+            boolean atLowerLimit = armTouch != null && armTouch.isPressed();
+            boolean atUpperLimit = armMotor.getCurrentPosition() > 2000;
 
-            if ( atLimit && power < 0 && !onArmReset ) {
+            if ( atLowerLimit && power < 0 && !onArmReset ) {
                 stopArm();
                 resetArmEncoders();
 
@@ -202,25 +220,17 @@ public class WheeledBotHardware extends OpMode {
                 return;
             }
 
-            if ( onArmReset ) {
-                DcMotorController.RunMode mode = armMotor.getMode();
 
-                if ( mode != DcMotorController.RunMode.RUN_WITHOUT_ENCODERS) {
-                    // keep changing mode back to power
-                    armMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+            // do not keep raising the arm if at upper limit
+            if ( atUpperLimit && power > 0)
+                power = 0;
 
-                    // we are done
-                    return;
-                }
-            }
+            // do not keep lowering the arm if at lower limit
+            if ( atLowerLimit && power < 0)
+                power = 0;
 
-            // ok send the power level when if it is to move up or touch is not pressed
-            if ( power > 0 || !atLimit){
-                armMotor.setPower(power);
-
-                // finally, arm is out of reset
-                onArmReset = false;
-            }
+            // ok send the power level
+            armMotor.setPower(power);
         }
     }
 
@@ -239,6 +249,9 @@ public class WheeledBotHardware extends OpMode {
      */
     void resetArmEncoders() {
         if ( armMotor != null ) {
+            // stop motor
+            armMotor.setPower(0);
+
             // send command
             armMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
 
