@@ -5,6 +5,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.util.Range;
 
 /**
@@ -33,7 +35,11 @@ public class WheeledBotHardware extends OpMode {
     Servo leftGrip;
     Servo rightGrip;
     GyroSensor gyroSensor;
+    TouchSensor armTouch;
+    OpticalDistanceSensor opticalDistanceSensor;
 
+    // state
+    boolean onArmReset;
     private int prevLeftRearStep;
     private int prevLeftFrontStep;
     private int prevRightRearStep;
@@ -93,6 +99,14 @@ public class WheeledBotHardware extends OpMode {
         catch (Exception ex) {
             sb.append("ERR ");
         }
+        sb.append("arm_touch: ");
+        try{
+            armTouch = hardwareMap.touchSensor.get("arm_touch");
+            sb.append("OK ");
+        }
+        catch (Exception ex) {
+            sb.append("ERR ");
+        }
         sb.append("left_grip: ");
         try {
             leftGrip = hardwareMap.servo.get("left_grip");
@@ -117,6 +131,14 @@ public class WheeledBotHardware extends OpMode {
         catch (Exception ex) {
             sb.append("ERR ");
         }
+        sb.append("optical ");
+        try {
+            opticalDistanceSensor = hardwareMap.opticalDistanceSensor.get("optical");
+            sb.append("OK ");
+        }
+        catch (Exception ex) {
+            sb.append("ERR ");
+        }
 
         //Reverse the right-side motors
         if (rightRearMotor != null)
@@ -128,7 +150,10 @@ public class WheeledBotHardware extends OpMode {
         closeGripper();
 
         //Prepare drive
-        resetEncoders();
+        resetDriveEncoders();
+
+        //Prepare arm
+        resetArmEncoders();
 
         //Report status
         telemetry.addData("Status", sb.toString());
@@ -136,7 +161,6 @@ public class WheeledBotHardware extends OpMode {
 
     @Override
     public void loop() {
-
     }
 
     /**
@@ -167,8 +191,37 @@ public class WheeledBotHardware extends OpMode {
         //Clip the power values so that it only goes from -1 to 1
         power = Range.clip(power, -1,1);
 
-        if ( armMotor != null)
-            armMotor.setPower(power);
+        if ( armMotor != null ) {
+            boolean atLimit = armTouch != null && armTouch.isPressed();
+
+            if ( atLimit && power < 0 && !onArmReset ) {
+                stopArm();
+                resetArmEncoders();
+
+                // we are done
+                return;
+            }
+
+            if ( onArmReset ) {
+                DcMotorController.RunMode mode = armMotor.getMode();
+
+                if ( mode != DcMotorController.RunMode.RUN_WITHOUT_ENCODERS) {
+                    // keep changing mode back to power
+                    armMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
+
+                    // we are done
+                    return;
+                }
+            }
+
+            // ok send the power level when if it is to move up or touch is not pressed
+            if ( power > 0 || !atLimit){
+                armMotor.setPower(power);
+
+                // finally, arm is out of reset
+                onArmReset = false;
+            }
+        }
     }
 
 
@@ -176,14 +229,39 @@ public class WheeledBotHardware extends OpMode {
      * Stop arm movement.
      */
     void stopArm() {
-        if ( armMotor != null)
+        if ( armMotor != null ) {
             armMotor.setPower(0);
+        }
     }
+
+    /**
+     * Reset arm motor encoders.
+     */
+    void resetArmEncoders() {
+        if ( armMotor != null ) {
+            // send command
+            armMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+
+            // we are now in reset mode
+            onArmReset = true;
+        }
+    }
+
+    /**
+     * Set the arm motor to the specified mode.
+     *
+     * @param mode  the motor run mode
+     */
+    void setArmMode(DcMotorController.RunMode mode) {
+        if ( armMotor != null )
+            armMotor.setMode(mode);
+    }
+
 
     /**
      * Reset drive motor encoders.
      */
-    void resetEncoders() {
+    void resetDriveEncoders() {
         if ( leftRearMotor != null)
             leftRearMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
         if (leftFrontMotor != null)
@@ -285,6 +363,8 @@ public class WheeledBotHardware extends OpMode {
     
     /**
      * Set the drive motors to the specified mode.
+     *
+     * @param mode  the motor run mode
      */
     void setDriveMode(DcMotorController.RunMode mode) {
         if ( leftRearMotor != null )
@@ -306,14 +386,19 @@ public class WheeledBotHardware extends OpMode {
         //Clip the power values so that it only goes from -1 to 1
         power = Range.clip(power, -1,1);
 
-        if ( leftRearMotor != null )
-            leftRearMotor.setPower(power);
-        if ( leftFrontMotor != null)
-            leftFrontMotor.setPower(power);
-        if ( rightRearMotor != null)
-            rightRearMotor.setPower(power);
-        if ( rightFrontMotor != null)
-            rightFrontMotor.setPower(power);
+        // stop moving when distance sensor says we are close to an obstacle and we want to move forward
+        boolean stop = opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && power < 0;
+
+        if ( !stop ) {
+            if (leftRearMotor != null)
+                leftRearMotor.setPower(power);
+            if (leftFrontMotor != null)
+                leftFrontMotor.setPower(power);
+            if (rightRearMotor != null)
+                rightRearMotor.setPower(power);
+            if (rightFrontMotor != null)
+                rightFrontMotor.setPower(power);
+        }
     }
 
     /**
@@ -327,14 +412,19 @@ public class WheeledBotHardware extends OpMode {
         leftPower = Range.clip(leftPower, -1,1);
         rightPower = Range.clip(rightPower, -1,1);
 
-        if ( leftRearMotor != null )
-            leftRearMotor.setPower(leftPower);
-        if ( leftFrontMotor != null)
-            leftFrontMotor.setPower(leftPower);
-        if ( rightRearMotor != null)
-            rightRearMotor.setPower(rightPower);
-        if ( rightFrontMotor != null)
-            rightFrontMotor.setPower(rightPower);
+        // stop moving when distance sensor says we are close to an obstacle and we want to move forward
+        boolean stop = opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && (leftPower < 0 || rightPower < 0);
+
+        if ( !stop ) {
+            if (leftRearMotor != null)
+                leftRearMotor.setPower(leftPower);
+            if (leftFrontMotor != null)
+                leftFrontMotor.setPower(leftPower);
+            if (rightRearMotor != null)
+                rightRearMotor.setPower(rightPower);
+            if (rightFrontMotor != null)
+                rightFrontMotor.setPower(rightPower);
+        }
     }
 
     /*
