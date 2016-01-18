@@ -141,10 +141,10 @@ public class WheeledBotHardware extends OpMode {
         }
 
         //Reverse the right-side motors
-        if (rightRearMotor != null)
-            rightRearMotor.setDirection(DcMotor.Direction.REVERSE);
-        if (rightFrontMotor != null)
-            rightFrontMotor.setDirection(DcMotor.Direction.REVERSE);
+        if (leftRearMotor != null)
+            leftRearMotor.setDirection(DcMotor.Direction.REVERSE);
+        if (leftFrontMotor != null)
+            leftFrontMotor.setDirection(DcMotor.Direction.REVERSE);
 
         //Set gripper to close
         closeGripper();
@@ -177,6 +177,9 @@ public class WheeledBotHardware extends OpMode {
             // force a power mode until we detect it
             armMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
         }
+
+        // update absolution position
+        updatePosition();
     }
 
 
@@ -316,7 +319,7 @@ public class WheeledBotHardware extends OpMode {
     /**
      * Use the motor encoders and the gyro sensor to update the absolute position of the robot.
      */
-    void updatePosition()
+    private void updatePosition()
     {
         double distance = 0;
         int motors = 0;
@@ -347,7 +350,7 @@ public class WheeledBotHardware extends OpMode {
 
         if ( motors > 0 && gyroSensor != null ) {
             // compute average of distance
-            distance = -distance / motors;
+            distance = distance / motors;
 
             // read angle
             int raw = gyroSensor.getHeading();
