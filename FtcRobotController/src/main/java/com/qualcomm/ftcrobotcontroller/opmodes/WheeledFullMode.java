@@ -67,7 +67,7 @@ public class WheeledFullMode extends WheeledBotHardware {
         //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
         //telemetry.addData("pos", String.format("%.0f %.0f", positionX, positionY));
         //telemetry.addData("touch", armTouch != null ? armTouch.isPressed() : "null");
-        //telemetry.addData("arm", String.format("%.2f %d %s %s", armMotor.getPower(), armMotor.getCurrentPosition(), onArmReset, armMotor.getMode().toString()));
+        telemetry.addData("arm", String.format("%s %.2f %d %s", onArmReset, armMotor.getPower(), armMotor.getCurrentPosition(), armMotor.getMode().toString()));
         //telemetry.addData("distance", String.format("%.2f", opticalDistanceSensor.getLightDetected()));
     }
 }
