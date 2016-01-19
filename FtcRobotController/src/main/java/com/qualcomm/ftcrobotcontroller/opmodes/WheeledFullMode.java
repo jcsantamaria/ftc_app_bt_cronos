@@ -29,7 +29,7 @@ public class WheeledFullMode extends WheeledBotHardware {
         //Get the values from the gamepads
         //Note: pushing the stick all the way up returns -1,
         // so we need to reverse the y values
-        float xValue = -gamepad1.left_stick_x;
+        float xValue =  gamepad1.left_stick_x;
         float yValue = -gamepad1.left_stick_y;
         float lValue = -gamepad1.right_stick_y;
 
@@ -61,7 +61,7 @@ public class WheeledFullMode extends WheeledBotHardware {
             closeGripper();
         }
 
-        //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
+        telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
         telemetry.addData("pos", String.format("%.0f %.0f", positionX, positionY));
         //telemetry.addData("touch", armTouch != null ? armTouch.isPressed() : "null");
         telemetry.addData("arm", String.format("%s %.2f %d %s", onArmReset, armMotor.getPower(), armMotor.getCurrentPosition(), armMotor.getMode().toString()));
