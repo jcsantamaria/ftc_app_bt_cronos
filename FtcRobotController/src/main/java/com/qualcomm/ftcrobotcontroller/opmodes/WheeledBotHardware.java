@@ -38,8 +38,6 @@ public class WheeledBotHardware extends OpMode {
     TouchSensor armTouch;
     OpticalDistanceSensor opticalDistanceSensor;
 
-    // state
-    boolean onArmReset;
     private int prevLeftRearStep;
     private int prevLeftFrontStep;
     private int prevRightRearStep;
@@ -53,7 +51,18 @@ public class WheeledBotHardware extends OpMode {
      * Absolute position of the robot in the y-axis.
      */
     public double positionY;
-    
+
+    /**
+     * Absolute heading (counter-clockwise) of the robot in radians.
+     */
+    public double heading;
+
+    /**
+     * Indicates that location encoders is under reset.
+     */
+    public boolean onArmReset;
+
+
     @Override
     public void init() {
 
@@ -299,21 +308,7 @@ public class WheeledBotHardware extends OpMode {
         // reset absolute variables
         positionX = 0.0;
         positionY = 0.0;
-    }
-
-    /**
-     * Reset the position to origin.
-     */
-    void resetPosition() {
-        // reset relative variables
-        prevLeftRearStep = 0;
-        prevLeftFrontStep = 0;
-        prevRightRearStep = 0;
-        prevRightFrontStep = 0;
-
-        // reset absolute variables
-        positionX = 0.0;
-        positionY = 0.0;
+        heading   = 0.0;
     }
 
     /**
@@ -354,13 +349,13 @@ public class WheeledBotHardware extends OpMode {
 
             // read angle
             int raw = gyroSensor.getHeading();
-            double angle = raw * DEG2RAD;
+            heading = raw * DEG2RAD;
 
             //telemetry.addData("raw", String.format("%d %.0f", raw, distance));
 
             // compute displacement
-            double dx = distance * Math.sin(angle);
-            double dy = distance * Math.cos(angle);
+            double dx = distance * Math.sin(heading);
+            double dy = distance * Math.cos(heading);
 
             // update position
             positionX = positionX + dx;
