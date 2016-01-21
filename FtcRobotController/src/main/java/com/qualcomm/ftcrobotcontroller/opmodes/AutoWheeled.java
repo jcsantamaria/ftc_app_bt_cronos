@@ -10,10 +10,13 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class AutoWheeled extends WheeledBotHardware {
     final double ARM_LOWER_POWER =-0.02;
-    final double ARM_RAISE_POWER = 0.08;
-    final int    ARM_SET_POSITION = 820;
-    final double DRIVE_POWER = 0.12;
-    final double WAYPOINT_THRESHOLD = 300;
+    final double ARM_RAISE_POWER = 0.1;
+    final int    ARM_SET_POSITION = 1600;
+    final double DRIVE_POWER = 0.20;
+    final double WAYPOINT_THRESHOLD_1 = 400;
+    final double APPROACH_THRESHOLD_1 = 600;
+    final double WAYPOINT_THRESHOLD_2 = 300;
+    final double APPROACH_THRESHOLD_2 = 600;
     final double SQUELCH_DURATION = 0.5;
     enum RobotState
     {
@@ -25,10 +28,10 @@ public class AutoWheeled extends WheeledBotHardware {
         Stop
     }
 
-    double targetx1 = -2500;
-    double targety1 = 4200;
-    double targetx2 = -5000;
-    double targety2 = 5000;
+    double targetx1 = -2800;
+    double targety1 = 7000;
+    double targetx2 = -6400;
+    double targety2 = 7000;
     double drive_power = DRIVE_POWER;
     RobotState state;
     StopWatch squelch;
@@ -92,7 +95,7 @@ public class AutoWheeled extends WheeledBotHardware {
 
             case Waypoint1:
             {
-               if (driveToTarget(targetx1, targety1, WAYPOINT_THRESHOLD)) {
+               if (driveToTarget(targetx1, targety1, WAYPOINT_THRESHOLD_1, APPROACH_THRESHOLD_1)) {
                     state = RobotState.Waypoint2;
                }
             }
@@ -100,7 +103,7 @@ public class AutoWheeled extends WheeledBotHardware {
 
             case Waypoint2:
             {
-                if (driveToTarget(targetx2, targety2, WAYPOINT_THRESHOLD)) {
+                if (driveToTarget(targetx2, targety2, WAYPOINT_THRESHOLD_2, APPROACH_THRESHOLD_2)) {
                     state = RobotState.Stop;
                 }
             }
@@ -134,10 +137,11 @@ public class AutoWheeled extends WheeledBotHardware {
      * Send drive control commands to move the robot to the specified target point.
      * @param targetx       the x coordinate
      * @param targety       the y coordinate
-     * @param threshold     the radius of the goal
+     * @param targetThreshold     the radius to reach the goal
+     * @param approachThreshold   the radius to slow down toward the goal
      * @return true if robot reached target; false otherwise
      */
-    boolean driveToTarget(double targetx, double targety, double threshold) {
+    boolean driveToTarget(double targetx, double targety, double targetThreshold, double approachThreshold) {
 
         // compute delta vector in absolute coordinates
         double dx = targetx - positionX;
@@ -148,8 +152,8 @@ public class AutoWheeled extends WheeledBotHardware {
         double angle = Math.atan2(dx,dy);
 
         double mag = 1;
-        if ( norm < threshold * 2) {
-            mag = norm / (threshold * 2);
+        if ( norm < approachThreshold) {
+            mag = 0.65 + (norm - targetThreshold) / (approachThreshold - targetThreshold);
         }
 
         // compute command in egocentric coordinates
@@ -170,6 +174,6 @@ public class AutoWheeled extends WheeledBotHardware {
 
         telemetry.addData("control", String.format("h:%3.0f a:%3.0f a-h:%3.0f dx:%4.2f dy:%4.2f p:%.2f", heading * RAD2DEG, angle * RAD2DEG, (angle - heading) * RAD2DEG, dx, dy, drive_power));
 
-        return norm < threshold;
+        return norm < targetThreshold;
     }
 }
