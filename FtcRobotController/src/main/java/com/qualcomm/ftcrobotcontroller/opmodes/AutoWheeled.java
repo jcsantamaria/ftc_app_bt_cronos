@@ -49,7 +49,7 @@ public class AutoWheeled extends WheeledBotHardware {
         squelch = new StopWatch();
 
         telemetry.addData("state", state.toString());
-        telemetry.addData("pos", String.format("%4.0f %4.0f h:%3.0f", positionX, positionY, heading * RAD2DEG));
+        telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, heading * RAD2DEG));
     }
 
 
@@ -92,35 +92,7 @@ public class AutoWheeled extends WheeledBotHardware {
 
             case Waypoint1:
             {
-                // compute delta vector
-                double dx = targetx1 - positionX;
-                double dy = targety1 - positionY;
-
-                // normalize
-                double norm  = Math.sqrt(dx * dx + dy * dy);
-                double angle = Math.atan2(dx,dy);
-                //dx = dx / norm;
-                //dy = dy / norm;
-
-                double mag = 1;
-                if ( norm < WAYPOINT_THRESHOLD * 2) {
-                    mag = norm / (WAYPOINT_THRESHOLD * 2);
-                }
-
-                dx = mag * Math.sin(angle - heading);
-                dy = mag * Math.cos(angle - heading);
-
-                //Calculate the power needed for each motor
-                double leftPower  = dy + dx;
-                double rightPower = dy - dx;
-
-                //set value to be less so it's not going crazy
-                double magnitude = drive_power;
-                setDrivePower(magnitude * leftPower, magnitude * rightPower);
-
-                telemetry.addData("control", String.format("%3.0f %3.0f %3.0f %.2f %.2f", heading * RAD2DEG, angle * RAD2DEG, (angle - heading) * RAD2DEG, dx, dy));
-
-               if (norm < WAYPOINT_THRESHOLD) {
+               if (driveToTarget(targetx1, targety1, WAYPOINT_THRESHOLD)) {
                     state = RobotState.Waypoint2;
                }
             }
@@ -128,35 +100,7 @@ public class AutoWheeled extends WheeledBotHardware {
 
             case Waypoint2:
             {
-                // compute delta vector
-                double dx = targetx2 - positionX;
-                double dy = targety2 - positionY;
-
-                // normalize
-                double norm = Math.sqrt(dx * dx + dy * dy);
-                double angle = Math.atan2(dx,dy);
-                //dx = dx / norm;
-                //dy = dy / norm;
-
-                double mag = 1;
-                if ( norm < WAYPOINT_THRESHOLD * 2) {
-                    mag = norm / (WAYPOINT_THRESHOLD * 2);
-                }
-
-                dx = mag * Math.sin(angle - heading);
-                dy = mag * Math.cos(angle - heading);
-
-                //Calculate the power needed for each motor
-                double leftPower  = dy + dx;
-                double rightPower = dy - dx;
-
-                //set value to be less so it's not going crazy
-                double magnitude = drive_power;
-                setDrivePower(magnitude * leftPower, magnitude * rightPower);
-
-                telemetry.addData("control", String.format("%.0f %.0f %.0f %.2f %.2f", heading * RAD2DEG, angle * RAD2DEG, (angle - heading) * RAD2DEG, dx, dy));
-
-                if (norm < WAYPOINT_THRESHOLD) {
+                if (driveToTarget(targetx2, targety2, WAYPOINT_THRESHOLD)) {
                     state = RobotState.Stop;
                 }
             }
@@ -164,6 +108,7 @@ public class AutoWheeled extends WheeledBotHardware {
 
             case Stop:
             {
+                // release the climbers!
                 setDrivePower(0);
                 openGripper();
             }
@@ -181,8 +126,50 @@ public class AutoWheeled extends WheeledBotHardware {
             squelch.reset();
         }
         telemetry.addData("state", state.toString());
-        telemetry.addData("pos", String.format("%4.0f %4.0f h:%3.0f", positionX, positionY, heading * RAD2DEG));
+        telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, heading * RAD2DEG));
         //telemetry.addData("arm", String.format("%s %.2f %d %s", onArmReset, armMotor.getPower(), armMotor.getCurrentPosition(), armMotor.getMode().toString()));
+    }
 
+    /**
+     * Send drive control commands to move the robot to the specified target point.
+     * @param targetx       the x coordinate
+     * @param targety       the y coordinate
+     * @param threshold     the radius of the goal
+     * @return true if robot reached target; false otherwise
+     */
+    boolean driveToTarget(double targetx, double targety, double threshold) {
+
+        // compute delta vector in absolute coordinates
+        double dx = targetx - positionX;
+        double dy = targety - positionY;
+
+        // normalize
+        double norm = Math.sqrt(dx * dx + dy * dy);
+        double angle = Math.atan2(dx,dy);
+
+        double mag = 1;
+        if ( norm < threshold * 2) {
+            mag = norm / (threshold * 2);
+        }
+
+        // compute command in egocentric coordinates
+        dx = mag * Math.sin(angle - heading);
+        dy = mag * Math.cos(angle - heading);
+
+        // correct control commands for reverse
+        if ( dy < 0)
+            dx = -dx;
+
+        //Calculate the power needed for each motor
+        double leftPower  = dy + dx;
+        double rightPower = dy - dx;
+
+        //set value to be less so it's not going crazy
+        double magnitude = drive_power;
+        setDrivePower(magnitude * leftPower, magnitude * rightPower);
+
+        telemetry.addData("control", String.format("h:%3.0f a:%3.0f a-h:%3.0f dx:%4.2f dy:%4.2f p:%.2f", heading * RAD2DEG, angle * RAD2DEG, (angle - heading) * RAD2DEG, dx, dy, drive_power));
+
+        return norm < threshold;
     }
 }
