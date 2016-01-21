@@ -19,9 +19,8 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class WheeledBotHardware extends OpMode {
 
-    final double PI = 3.1415926535897932384626433832795;
-    final double RAD2DEG = 180.0 / PI;
-    final double DEG2RAD = PI / 180.0;
+    final double RAD2DEG = 180.0 / Math.PI;
+    final double DEG2RAD = Math.PI / 180.0;
     final double LEFT_OPEN_POSITION = 0.0;
     final double LEFT_CLOSED_POSITION = 0.5;
     final double RIGHT_OPEN_POSITION = 1.0;
