@@ -154,6 +154,21 @@ public class WheeledBotHardware extends OpMode {
         if (leftFrontMotor != null)
             leftFrontMotor.setDirection(DcMotor.Direction.REVERSE);
 
+        // calibrate gyro
+        if ( gyroSensor != null ) {
+            gyroSensor.calibrate();
+
+//            // make sure the gyro is calibrated
+//            while (gyroSensor.isCalibrating()) {
+//                try {
+//                    Thread.sleep(50);
+//                }
+//                catch(InterruptedException ex) {
+//                    sb.append(String.format("exception: %s", ex.toString()));
+//                }
+//            }
+        }
+
         //Set gripper to close
         closeGripper();
 
@@ -295,8 +310,9 @@ public class WheeledBotHardware extends OpMode {
         if (rightFrontMotor != null)
             rightFrontMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
 
-        if ( gyroSensor != null)
+        if ( gyroSensor != null) {
             gyroSensor.resetZAxisIntegrator();
+        }
 
         // reset relative variables
         prevLeftRearStep = 0;
