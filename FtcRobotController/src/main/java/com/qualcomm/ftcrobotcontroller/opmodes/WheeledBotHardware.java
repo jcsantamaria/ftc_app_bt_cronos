@@ -19,8 +19,6 @@ import com.qualcomm.robotcore.util.Range;
  */
 public class WheeledBotHardware extends OpMode {
 
-    final double RAD2DEG = 180.0 / Math.PI;
-    final double DEG2RAD = Math.PI / 180.0;
     final double LEFT_OPEN_POSITION = 0.0;
     final double LEFT_CLOSED_POSITION = 0.5;
     final double RIGHT_OPEN_POSITION = 1.0;
@@ -363,8 +361,8 @@ public class WheeledBotHardware extends OpMode {
             distance = distance / motors;
 
             // read angle
-            int raw = gyroSensor.getHeading();
-            heading = raw * DEG2RAD;
+            int rawdeg = gyroSensor.getHeading();
+            heading = Math.toRadians(rawdeg);
 
             //telemetry.addData("raw", String.format("%d %.0f", raw, distance));
 
@@ -485,5 +483,18 @@ public class WheeledBotHardware extends OpMode {
 
         // return scaled value.
         return dScale;
+    }
+
+    /**
+     * Normalizes an angle in radians between the range of [reference, reference + 2 PI).
+     *
+     * @param angle         the angle in radians
+     * @param reference     the reference in radians
+     * @return  the normalized angle in radians
+     */
+    public static double NormalizeAngle(double angle, double reference)
+    {
+        double result = (angle - reference) % (2 * Math.PI);
+        return result < 0.0 ? 2 * Math.PI + reference + result : reference + result;
     }
 }
