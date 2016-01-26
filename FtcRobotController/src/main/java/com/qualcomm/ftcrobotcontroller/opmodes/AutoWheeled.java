@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.util.Range;
 public class AutoWheeled extends WheeledBotHardware {
     final double ARM_LOWER_POWER  =-0.02;
     final double ARM_RAISE_POWER  = 0.1;
-    final int    ARM_SET_POSITION = 1600;
+    final int    ARM_SET_POSITION = 1700;
     final double DRIVE_POWER      = 0.20;
     final double SQUELCH_DURATION = 0.5;
 
@@ -20,6 +20,7 @@ public class AutoWheeled extends WheeledBotHardware {
 
         Waypoint1,
         Waypoint2,
+        WaitDrop,
         Stop
     }
 
@@ -30,13 +31,17 @@ public class AutoWheeled extends WheeledBotHardware {
     double WaypointThreshold1 =   400;
 
     // parameters for waypoint 2
-    double targetx2           = -6400;
-    double targety2           =  7000;
+    double targetx2           = -6700;
+    double targety2           =  7100;
     double ApproachThreshold2 =  7200;
-    double WaypointThreshold2 =   400;
+    double WaypointThreshold2 =   350;
+
+    // parameters for wait drop
+    double WaitDropDuration = 3;
 
     double drive_power = DRIVE_POWER;
     RobotState state;
+    StopWatch  stopWatch;
     StopWatch  squelch;
 
     @Override
@@ -53,6 +58,7 @@ public class AutoWheeled extends WheeledBotHardware {
 
         state = RobotState.LowerArm;
         squelch = new StopWatch();
+        stopWatch = new StopWatch();
 
         telemetry.addData("state", state.toString());
         telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
@@ -105,7 +111,24 @@ public class AutoWheeled extends WheeledBotHardware {
             break;
 
             case Waypoint2: {
-                if (moveToTargetAndHeading(targetx2, targety2, 270, WaypointThreshold2, ApproachThreshold2)) {
+                // check if we reach the wall
+                boolean wallReached = opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2;
+
+                if (moveToTargetAndHeading(targetx2, targety2, 270, ApproachThreshold2, WaypointThreshold2) || wallReached) {
+                    // restart stopwatch
+                    stopWatch.reset();
+                    // next state
+                    state = RobotState.WaitDrop;
+                }
+            }
+            break;
+
+            case WaitDrop: {
+
+                // stop the robot
+                setDrivePower(0);
+
+                if ( stopWatch.elapsedTime() > WaitDropDuration) {
                     state = RobotState.Stop;
                 }
             }
@@ -206,7 +229,7 @@ public class AutoWheeled extends WheeledBotHardware {
         double targetHeading = Math.toRadians(targetHeadingDeg);
 
         // compute the delta vector: from target to position
-        Vector2 delta = Vector2.subtract(target, position);
+        Vector2 delta = Vector2.subtract(position, target);
         double  norm  = delta.getMagnitude();
 
         // compute a coordinate system at target: x axis is horizontal and y axis is vertical
@@ -255,7 +278,7 @@ public class AutoWheeled extends WheeledBotHardware {
             dx += Range.clip(deltaHeadingRad / MAX_DELTA_HEADING_RAD, -1, 1);
 
             // full speed unless we are getting close
-            double mag = Range.clip((norm - targetThreshold) / targetThreshold, 0, 1);
+            double mag = Range.clip(norm / targetThreshold, 0, 1);
 
             // forward depends on how much we steer
             dy = mag * (1f - Math.abs(dx));
