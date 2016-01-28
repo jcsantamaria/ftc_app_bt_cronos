@@ -21,8 +21,10 @@ public class WheeledBotHardware extends OpMode {
 
     final double LEFT_OPEN_POSITION = 0.0;
     final double LEFT_CLOSED_POSITION = 0.5;
+    final double LEFT_PUSH_POSITION = 0.1;
     final double RIGHT_OPEN_POSITION = 1.0;
     final double RIGHT_CLOSED_POSITION = 0.5;
+    final double RIGHT_PUSH_POSITION = 0.9;
 
     DcMotor leftRearMotor;
     DcMotor leftFrontMotor;
@@ -229,6 +231,22 @@ public class WheeledBotHardware extends OpMode {
             leftGrip.setPosition(LEFT_CLOSED_POSITION);
         if (rightGrip != null)
             rightGrip.setPosition(RIGHT_CLOSED_POSITION);
+    }
+
+    /**
+     * Set the right gripper to push position.
+     */
+    void pushRightGripper() {
+        if (rightGrip != null)
+            rightGrip.setPosition(RIGHT_PUSH_POSITION);
+    }
+
+    /**
+     * Set the left gripper to push position.
+     */
+    void pushLeftGripper() {
+        if (leftGrip != null)
+            leftGrip.setPosition(LEFT_PUSH_POSITION);
     }
 
     /**
@@ -463,8 +481,7 @@ public class WheeledBotHardware extends OpMode {
      * the robot more precisely at slower speeds.
      */
     double scaleInput(double value)  {
-        double[] scaleArray = { 0.0, 0.05, 0.09, 0.10, 0.12, 0.15, 0.18, 0.24,
-                0.30, 0.36, 0.43, 0.50, 0.60, 0.72, 0.85, 1.00, 1.00 };
+        double[] scaleArray = { 0.0, 0.05, 0.09, 0.10, 0.12, 0.15, 0.18, 0.24, 0.30, 0.36, 0.43, 0.50, 0.60, 0.72, 0.85, 1.00, 1.00 };
 
         // get the corresponding index for the scaleInput array.
         int index = (int)Math.round (value * 16.0);
