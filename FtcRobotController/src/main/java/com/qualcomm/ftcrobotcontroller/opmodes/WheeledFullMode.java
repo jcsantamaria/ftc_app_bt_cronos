@@ -18,6 +18,10 @@ public class WheeledFullMode extends WheeledBotHardware {
 
         //Set gripper to open
         openGripper();
+
+        telemetry.addData("joy", String.format("%.2f %.2f", 0.0, 0.0));
+        telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
+        telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));
     }
 
     @Override
@@ -62,7 +66,8 @@ public class WheeledFullMode extends WheeledBotHardware {
         }
 
         telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
-        telemetry.addData("pos", String.format("%.0f %.0f", positionX, positionY));
+        telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
+        telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));
         //telemetry.addData("touch", armTouch != null ? armTouch.isPressed() : "null");
         telemetry.addData("arm", String.format("%s %.2f %d %s", onArmReset, armMotor.getPower(), armMotor.getCurrentPosition(), armMotor.getMode().toString()));
         //telemetry.addData("distance", String.format("%.2f", opticalDistanceSensor.getLightDetected()));
