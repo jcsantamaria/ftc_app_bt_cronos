@@ -37,7 +37,10 @@ public class WheeledFullMode extends WheeledBotHardware {
         float yValue = -gamepad1.left_stick_y;
         float lValue = -gamepad1.right_stick_y;
 
-        lValue = (float) scaleInput(lValue) * 0.3f;
+        // scale inputs to non-linear to smooth control
+        lValue = (float) scaleInput(lValue);
+        xValue = (float) scaleInput(xValue);
+        yValue = (float) scaleInput(yValue);
 
         // arm control
         if (Math.abs(lValue) > 0.05) {
@@ -52,20 +55,25 @@ public class WheeledFullMode extends WheeledBotHardware {
         float rightPower = yValue - xValue;
 
         //Set the power of the motors with the gamepad values
-        float driveMagnitude = 0.5f;
-        setDrivePower(driveMagnitude * scaleInput(leftPower), driveMagnitude * scaleInput(rightPower));
+        float driveMagnitude = 0.4f;
+        setDrivePower(driveMagnitude * leftPower, driveMagnitude * rightPower);
 
         // gripper control
         // This code will open and close the gripper with two buttons
-        // using 1 button to open and another to close the gripper
+        // using 'a' button to open and 'x' to close the gripper
         if (gamepad1.x) {
             openGripper();
         }
         if (gamepad1.a) {
             closeGripper();
         }
+        // gripper push position
+        if ( gamepad1.left_bumper )
+            pushLeftGripper();
+        if ( gamepad1.right_bumper )
+            pushRightGripper();
 
-        telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
+        //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
         telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
         telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));
         //telemetry.addData("touch", armTouch != null ? armTouch.isPressed() : "null");
