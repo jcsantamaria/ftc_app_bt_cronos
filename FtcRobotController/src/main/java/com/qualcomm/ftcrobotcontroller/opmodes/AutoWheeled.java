@@ -33,6 +33,7 @@ public class AutoWheeled extends WheeledBotHardware {
     // parameters for waypoint 2
     double targetx2           = -6700;
     double targety2           =  7100;
+    double targetHeading2     =   270;
     double ApproachThreshold2 =  7200;
     double WaypointThreshold2 =   350;
 
@@ -71,6 +72,7 @@ public class AutoWheeled extends WheeledBotHardware {
         // do what our parent says first
         super.loop();
 
+        // manual overrides for debugging
         if ( gamepad1.a ) {
             state = RobotState.Stop;
         }
@@ -104,17 +106,26 @@ public class AutoWheeled extends WheeledBotHardware {
 
             case Waypoint1:
             {
-               if (moveToTarget(targetx1, targety1, WaypointThreshold1, ApproachThreshold1)) {
+                // keep moving towards target until we are within the target threshold
+               if (moveToTarget(targetx1, targety1, ApproachThreshold1, WaypointThreshold1)) {
+                   // next state
                     state = RobotState.Waypoint2;
                }
             }
             break;
 
             case Waypoint2: {
-                // check if we reach the wall
-                boolean wallReached = opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2;
 
-                if (moveToTargetAndHeading(targetx2, targety2, 270, ApproachThreshold2, WaypointThreshold2) || wallReached) {
+                // compute distance to target
+                double dx   = targetx2 - positionX;
+                double dy   = targety2 - positionY;
+                double norm = Math.sqrt(dx * dx + dy * dy);
+
+                // check if we reach the wall: optical sensor triggers and we are close to the wall
+                boolean wallReached = opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && norm < 2200;
+
+                // keep moving towards target until we are within the target threshold
+                if (moveToTargetAndHeading(targetx2, targety2, targetHeading2, ApproachThreshold2, WaypointThreshold2) || wallReached) {
                     // restart stopwatch
                     stopWatch.reset();
                     // next state
@@ -129,6 +140,7 @@ public class AutoWheeled extends WheeledBotHardware {
                 setDrivePower(0);
 
                 if ( stopWatch.elapsedTime() > WaitDropDuration) {
+                    // next state
                     state = RobotState.Stop;
                 }
             }
@@ -142,7 +154,6 @@ public class AutoWheeled extends WheeledBotHardware {
             }
             break;
         }
-
 
         // adjust the move forward duration using the up/down dpad
         if ( gamepad1.dpad_down && squelch.elapsedTime() > SQUELCH_DURATION) {
@@ -162,26 +173,28 @@ public class AutoWheeled extends WheeledBotHardware {
      * Send drive control commands to move the robot to the specified target point.
      * @param targetx       the x coordinate
      * @param targety       the y coordinate
-     * @param targetThreshold     the radius to reach the goal
      * @param approachThreshold   the radius to slow down toward the goal
+     * @param targetThreshold     the radius to reach the goal
      * @return true if robot reached target; false otherwise
      */
-    boolean moveToTarget(double targetx, double targety, double targetThreshold, double approachThreshold) {
+    boolean moveToTarget(double targetx, double targety, double approachThreshold, double targetThreshold ) {
 
         // compute delta vector in absolute coordinates
         double dx = targetx - positionX;
         double dy = targety - positionY;
 
-        // normalize
-        double norm = Math.sqrt(dx * dx + dy * dy);
+        // compute norm and angle of delta vector
+        double norm  = Math.sqrt(dx * dx + dy * dy);
         double angle = Math.atan2(dx, dy);
 
         double mag = 1;
         if ( norm < targetThreshold) {
+            // slow down to 0 power
             mag = 0.4 * norm / targetThreshold;
         }
         else if ( norm < approachThreshold) {
-            mag = 0.4 + (norm - targetThreshold) / (approachThreshold - targetThreshold);
+            // slow down to approach speed of 0.4
+            mag = 0.4 + 0.6 * (norm - targetThreshold) / (approachThreshold - targetThreshold);
         }
 
         // compute command in egocentric coordinates
@@ -213,8 +226,8 @@ public class AutoWheeled extends WheeledBotHardware {
      * @param targetX           the x coordinate
      * @param targetY           the y coordinate
      * @param targetHeadingDeg  the target heading in degrees
-     * @param targetThreshold     the radius to reach the goal
      * @param approachThreshold   the radius to slow down toward the goal
+     * @param targetThreshold     the radius to reach the goal
      * @return true if robot reached target; false otherwise
      */
     boolean moveToTargetAndHeading(double targetX, double targetY, double targetHeadingDeg, double approachThreshold, double targetThreshold)
@@ -241,7 +254,7 @@ public class AutoWheeled extends WheeledBotHardware {
         double onY = Vector2.Dot(delta, yaxis);
 
         // compute control commands
-        double dx = 0, dy = 0;
+        double dx, dy;
         if ( Math.abs(onX) > approachThreshold )
         {
             // robot is too far off: lets head for the focal point
