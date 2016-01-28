@@ -34,6 +34,7 @@ public class WheeledBotHardware extends OpMode {
     GyroSensor gyroSensor;
     TouchSensor armTouch;
     OpticalDistanceSensor opticalDistanceSensor;
+    GyroIntegrator orientation;
 
     private int prevLeftRearStep;
     private int prevLeftFrontStep;
@@ -50,7 +51,7 @@ public class WheeledBotHardware extends OpMode {
     public double positionY;
 
     /**
-     * Absolute heading (counter-clockwise) of the robot in radians.
+     * Absolute heading (z axis / up) of the robot in radians.
      */
     public double heading;
 
@@ -165,6 +166,8 @@ public class WheeledBotHardware extends OpMode {
 //                    sb.append(String.format("exception: %s", ex.toString()));
 //                }
 //            }
+
+            orientation = new GyroIntegrator();
         }
 
         //Set gripper to close
@@ -201,6 +204,10 @@ public class WheeledBotHardware extends OpMode {
 
         // update absolution position
         updatePosition();
+
+        if ( orientation != null && gyroSensor != null && !gyroSensor.isCalibrating()) {
+            orientation.update( gyroSensor.rawX(), gyroSensor.rawY(), gyroSensor.rawZ());
+        }
     }
 
 
@@ -257,7 +264,6 @@ public class WheeledBotHardware extends OpMode {
             armMotor.setPower(power);
         }
     }
-
 
     /**
      * Stop arm movement.
