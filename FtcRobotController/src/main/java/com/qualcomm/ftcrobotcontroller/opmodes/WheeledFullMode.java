@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.hardware.DcMotorController;
 
 public class WheeledFullMode extends WheeledBotHardware {
 
+    float driveMagnitude;
+
     @Override
     public void start() {
 
@@ -18,6 +20,9 @@ public class WheeledFullMode extends WheeledBotHardware {
 
         //Set gripper to open
         openGripper();
+
+        // default drive magnitude
+        driveMagnitude = 0.4f;
 
         telemetry.addData("joy", String.format("%.2f %.2f", 0.0, 0.0));
         telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
@@ -54,19 +59,21 @@ public class WheeledFullMode extends WheeledBotHardware {
         float leftPower = yValue + xValue;
         float rightPower = yValue - xValue;
 
-        //Set the power of the motors with the gamepad values
-        float driveMagnitude = 0.4f;
-        setDrivePower(driveMagnitude * leftPower, driveMagnitude * rightPower);
-
         // gripper control
         // This code will open and close the gripper with two buttons
         // using 'a' button to open and 'x' to close the gripper
         if (gamepad1.x) {
             openGripper();
+            driveMagnitude = 0.4f;
         }
         if (gamepad1.a) {
             closeGripper();
+            driveMagnitude = 0.18f;
         }
+
+        //Set the power of the motors with the gamepad values
+        setDrivePower(driveMagnitude * leftPower, driveMagnitude * rightPower);
+
         // gripper push position
         if ( gamepad1.left_bumper )
             pushLeftGripper();
