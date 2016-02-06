@@ -35,6 +35,7 @@ public class WheeledBotHardware extends OpMode {
     Servo rightGrip;
     GyroSensor gyroSensor;
     TouchSensor armTouch;
+    TouchSensor beaconTouch;
     OpticalDistanceSensor opticalDistanceSensor;
     GyroIntegrator orientation;
 
@@ -111,6 +112,14 @@ public class WheeledBotHardware extends OpMode {
         sb.append("arm_touch: ");
         try{
             armTouch = hardwareMap.touchSensor.get("arm_touch");
+            sb.append("OK ");
+        }
+        catch (Exception ex) {
+            sb.append("ERR ");
+        }
+        sb.append("beacon_touch: ");
+        try{
+            beaconTouch = hardwareMap.touchSensor.get("beacon_touch");
             sb.append("OK ");
         }
         catch (Exception ex) {
@@ -435,7 +444,7 @@ public class WheeledBotHardware extends OpMode {
         power = Range.clip(power, -1,1);
 
         // stop moving when distance sensor says we are close to an obstacle and we want to move forward
-        boolean stop = opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && power < 0;
+        boolean stop = opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && power > 0;
 
         if ( !stop ) {
             if (leftRearMotor != null)
@@ -461,7 +470,7 @@ public class WheeledBotHardware extends OpMode {
         rightPower = Range.clip(rightPower, -1,1);
 
         // stop moving when distance sensor says we are close to an obstacle and we want to move forward
-        boolean stop = opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && (leftPower < 0 || rightPower < 0);
+        boolean stop = opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && (leftPower > 0 || rightPower > 0);
 
         if ( !stop ) {
             if (leftRearMotor != null)
@@ -517,7 +526,8 @@ public class WheeledBotHardware extends OpMode {
      */
     public static double NormalizeAngle(double angle, double reference)
     {
-        double result = (angle - reference) % (2 * Math.PI);
-        return result < 0.0 ? 2 * Math.PI + reference + result : reference + result;
+        final double TWO_PI = 2.0 * Math.PI;
+        double result = (angle - reference) % TWO_PI;
+        return result < 0.0 ? TWO_PI + reference + result : reference + result;
     }
 }
