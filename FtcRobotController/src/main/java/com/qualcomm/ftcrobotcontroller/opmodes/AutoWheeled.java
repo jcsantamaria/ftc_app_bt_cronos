@@ -7,41 +7,54 @@ import com.qualcomm.robotcore.util.Range;
  * OpMode to autonomously park the robot.
  */
 public class AutoWheeled extends WheeledBotHardware {
-    final double ARM_LOWER_POWER  =-0.02;
-    final double ARM_RAISE_POWER  = 0.1;
-    final int    ARM_SET_POSITION = 1700;
-    final double DRIVE_POWER      = 0.20;
-    final double SQUELCH_DURATION = 0.5;
+    final double ARM_LOWER_POWER     =-0.02;
+    final double ARM_RAISE_POWER     = 0.1;
+    final int    ARM_DROP_POSITION   = 1700;
+    final int    ARM_BEACON_POSITION = 1150;
+    final double DRIVE_POWER         = 0.20;
+    final double SQUELCH_DURATION    = 0.5;
 
-    enum RobotState
+    public enum RobotState
     {
         LowerArm,
         RaiseArm,
 
-        Waypoint1,
-        Waypoint2,
-        WaitDrop,
-        Stop
+        Waypoint1Aux,       // auxiliary target
+        WaypointBeacon,     // beacon target
+        WaitDrop,           // wait 3 seconds and drop climbers
+        BackABit,           // back up to approach beacon
+        ApproachBeacon,           // approach beacon
+        Stop                // stop the robot
     }
 
-    // parameters for waypoint 1
-    double targetx1           = -2800;
-    double targety1           =  7000;
-    double ApproachThreshold1 =   600;
-    double WaypointThreshold1 =   400;
+    // parameters for waypoint auxiliary
+    double targetxAux           = -2800;
+    double targetyAux           =  7000;
+    double targetHeadingAux     =     0;
+    double ApproachThresholdAux =   600;
+    double WaypointThresholdAux =   350;
 
-    // parameters for waypoint 2
-    double targetx2           = -6700;
-    double targety2           =  7100;
-    double targetHeading2     =   270;
-    double ApproachThreshold2 =  7200;
-    double WaypointThreshold2 =   350;
+    // parameters for waypoint beacon
+    public double targetxBeacon           = -6700;
+    public double targetyBeacon           =  7100;
+    public double targetHeadingBeacon     =   270;
+
+    // debug values
+//    double targetxBeacon           = 0;
+//    double targetyBeacon           = 2200;
+//    double targetHeadingBeacon     = 0;
+
+    public double ApproachThresholdBeacon =  7200;
+    public double WaypointThresholdBeacon =   350;
 
     // parameters for wait drop
     double WaitDropDuration = 3;
 
-    double drive_power = DRIVE_POWER;
-    RobotState state;
+    // parameters for stop
+    double WaitBeaconPushDuration = 1;
+
+    public double drive_power = DRIVE_POWER;
+    public RobotState state;
     StopWatch  stopWatch;
     StopWatch  squelch;
 
@@ -62,7 +75,7 @@ public class AutoWheeled extends WheeledBotHardware {
         stopWatch = new StopWatch();
 
         telemetry.addData("state", state.toString());
-        telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
+        telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f o:%.2f", positionX, positionY, Math.toDegrees(heading), opticalDistanceSensor.getLightDetected()));
     }
 
 
@@ -77,7 +90,7 @@ public class AutoWheeled extends WheeledBotHardware {
             state = RobotState.Stop;
         }
         if ( state == RobotState.Stop && gamepad1.x) {
-            state = RobotState.Waypoint1;
+            state = RobotState.Waypoint1Aux;
         }
 
         switch ( state )
@@ -94,38 +107,38 @@ public class AutoWheeled extends WheeledBotHardware {
 
             case RaiseArm:
             {
-                if ( armMotor.getCurrentPosition() < ARM_SET_POSITION ) {
+                if ( armMotor.getCurrentPosition() < ARM_DROP_POSITION) {
                     moveArm(ARM_RAISE_POWER);
                 }
                 else {
                     stopArm();
-                    state = RobotState.Waypoint2;
+                    state = RobotState.WaypointBeacon;
                 }
             }
             break;
 
-            case Waypoint1:
+            case Waypoint1Aux:
             {
                 // keep moving towards target until we are within the target threshold
-               if (moveToTarget(targetx1, targety1, ApproachThreshold1, WaypointThreshold1)) {
+               if (moveToTarget(targetxAux, targetyAux, ApproachThresholdAux, WaypointThresholdAux)) {
                    // next state
-                    state = RobotState.Waypoint2;
+                    state = RobotState.WaypointBeacon;
                }
             }
             break;
 
-            case Waypoint2: {
+            case WaypointBeacon: {
 
                 // compute distance to target
-                double dx   = targetx2 - positionX;
-                double dy   = targety2 - positionY;
+                double dx   = targetxBeacon - positionX;
+                double dy   = targetyBeacon - positionY;
                 double norm = Math.sqrt(dx * dx + dy * dy);
 
                 // check if we reach the wall: optical sensor triggers and we are close to the wall
                 boolean wallReached = opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2 && norm < 2200;
 
                 // keep moving towards target until we are within the target threshold
-                if (moveToTargetAndHeading(targetx2, targety2, targetHeading2, ApproachThreshold2, WaypointThreshold2) || wallReached) {
+                if (moveToTargetAndHeading(targetxBeacon, targetyBeacon, targetHeadingBeacon, ApproachThresholdBeacon, WaypointThresholdBeacon) || wallReached) {
                     // restart stopwatch
                     stopWatch.reset();
                     // next state
@@ -134,12 +147,62 @@ public class AutoWheeled extends WheeledBotHardware {
             }
             break;
 
-            case WaitDrop: {
-
+            case WaitDrop:
+            {
                 // stop the robot
                 setDrivePower(0);
 
                 if ( stopWatch.elapsedTime() > WaitDropDuration) {
+                    openGripper();
+
+                    // set auxiliary target: 1 tile behind beacon
+                    targetxAux       = targetxBeacon - 2200 * Math.sin(Math.toRadians(targetHeadingBeacon));
+                    targetyAux       = targetyBeacon - 2200 * Math.cos( Math.toRadians(targetHeadingBeacon));
+                    targetHeadingAux = targetHeadingBeacon;
+
+                    //drive_power = 0;
+
+                    // next state
+                    state = RobotState.BackABit;
+                }
+            }
+            break;
+
+            case BackABit:
+            {
+                //openGripper();
+
+                // keep moving towards target until we are within the target threshold
+                if (moveToTargetAndHeading(targetxAux, targetyAux, targetHeadingAux, ApproachThresholdAux, WaypointThresholdAux)) {
+
+                    // set auxiliary target: 1 1/2 tiles in beyond beacon
+                    targetxAux       = targetxBeacon + 3300 * Math.sin(Math.toRadians(targetHeadingBeacon));
+                    targetyAux       = targetyBeacon + 3300 * Math.cos(Math.toRadians(targetHeadingBeacon));
+                    targetHeadingAux = targetHeadingBeacon;
+
+                    // next state
+                    state = RobotState.ApproachBeacon;
+                }
+            }
+            break;
+
+            case ApproachBeacon:
+            {
+                if ( armMotor.getCurrentPosition() > ARM_BEACON_POSITION) {
+                    moveArm(ARM_LOWER_POWER);
+                }
+                else {
+                    stopArm();
+                }
+
+                // check if we reach the wall: optical sensor triggers and we are close to the wall
+                boolean wallReached = (opticalDistanceSensor != null && opticalDistanceSensor.getLightDetected() > 0.2) ||
+                                      (beaconTouch != null && beaconTouch.isPressed());
+
+                // keep moving towards target until we are within the target threshold
+                if (moveToTargetAndHeading(targetxAux, targetyAux, targetHeadingAux, ApproachThresholdAux, WaypointThresholdAux) || wallReached) {
+                    // restart stopwatch
+                    stopWatch.reset();
                     // next state
                     state = RobotState.Stop;
                 }
@@ -151,6 +214,10 @@ public class AutoWheeled extends WheeledBotHardware {
                 // release the climbers!
                 setDrivePower(0);
                 openGripper();
+
+                if ( stopWatch.elapsedTime() > WaitBeaconPushDuration ) {
+                    //pushRightGripper();
+                }
             }
             break;
         }
@@ -165,7 +232,7 @@ public class AutoWheeled extends WheeledBotHardware {
             squelch.reset();
         }
         telemetry.addData("state", state.toString());
-        telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
+        telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f o:%.2f", positionX, positionY, Math.toDegrees(heading), opticalDistanceSensor.getLightDetected()));
         //telemetry.addData("arm", String.format("%s %.2f %d %s", onArmReset, armMotor.getPower(), armMotor.getCurrentPosition(), armMotor.getMode().toString()));
     }
 
@@ -232,8 +299,7 @@ public class AutoWheeled extends WheeledBotHardware {
      */
     boolean moveToTargetAndHeading(double targetX, double targetY, double targetHeadingDeg, double approachThreshold, double targetThreshold)
     {
-        final double MAX_DELTA_HEADING_RAD = Math.toRadians(10);
-        final double MAX_TETHA_RAD         = Math.toRadians(15);
+        final double MAX_DELTA_HEADING = Math.toRadians(10);
 
         // use vectors for target and position
         Vector2 target   = new Vector2(targetX, targetY);
@@ -266,7 +332,7 @@ public class AutoWheeled extends WheeledBotHardware {
             dx = Math.sin(angle - heading);
             dy = Math.cos(angle - heading);
         }
-        else
+        else if ( Math.abs(onX) > targetThreshold / 2)
         {
             // robot is within approach threshold: lets move towards target along an ellipse
             double theta = onX > 0 ? Math.atan2(onY, onX - approachThreshold) : Math.atan2(onY, onX + approachThreshold);
@@ -275,26 +341,40 @@ public class AutoWheeled extends WheeledBotHardware {
             double r = (a + b) / 2f;             // average radius
 
             // heading based on equation of an ellipse
-            // but the ellipse depends if the robot is on the positive side or negatice size alogn x axis
+            // but the ellipse depends if the robot is on the positive side or negative size along x axis
             double onh = onX > 0 ? Math.atan2( a * Math.sin(theta), -b * Math.cos(theta) ) :
                                    Math.atan2(-a * Math.sin(theta),  b * Math.cos(theta) );
             // convert to global frame
             onh = NormalizeAngle(onh + targetHeading, -Math.PI);
 
             // turn bias based on average radius
-            dx = Range.clip(Math.signum(onX) * 2000 / r, -0.5, 0.5);
+            dx = Range.clip(Math.signum(onX) * 500 / r, -0.5, 0.5);
 
             // compute the error between the desired and current heading
-            double deltaHeadingRad = NormalizeAngle(onh - heading, -Math.PI);
+            double deltaHeading = NormalizeAngle(onh - heading, -Math.PI);
 
             // extra turn to correct the heading error
-            dx += Range.clip(deltaHeadingRad / MAX_DELTA_HEADING_RAD, -1, 1);
+            dx = Range.clip( dx + deltaHeading / MAX_DELTA_HEADING, -1.0, 1.0);
 
             // full speed unless we are getting close
-            double mag = Range.clip(norm / targetThreshold, 0, 1);
+            double mag = Range.clip(norm / targetThreshold, 0.0, 1.0);
 
             // forward depends on how much we steer
-            dy = mag * (1f - Math.abs(dx));
+            dy = mag * (1.0 - Math.abs(dx));
+        }
+        else {
+
+            // compute the error between the desired and current heading
+            double deltaHeading = NormalizeAngle(targetHeading - heading, -Math.PI);
+
+            // correct the heading error
+            dx = Range.clip(-Math.signum(onY) * deltaHeading / (2.0 * MAX_DELTA_HEADING), -1.0, 1.0);
+
+            // full speed unless we are getting close
+            double mag = -Math.signum(onY) * 0.3 * Range.clip( norm / targetThreshold, 0.0, 1.0);
+
+            // forward depends on how much we steer
+            dy = mag * (1.0 - 0.75 * Math.abs(dx));
         }
 
         // correct control commands for reverse
