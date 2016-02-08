@@ -11,7 +11,7 @@ public class AutoWheeled extends WheeledBotHardware {
     final double ARM_RAISE_POWER     = 0.1;
     final int    ARM_DROP_POSITION   = 1700;
     final int    ARM_BEACON_POSITION = 1150;
-    final double DRIVE_POWER         = 0.20;
+    final double DRIVE_POWER         = 0.25;
     final double SQUELCH_DURATION    = 0.5;
 
     public enum RobotState
@@ -36,7 +36,7 @@ public class AutoWheeled extends WheeledBotHardware {
 
     // parameters for waypoint beacon
     public double targetxBeacon           = -6700;
-    public double targetyBeacon           =  7100;
+    public double targetyBeacon           =  7150;
     public double targetHeadingBeacon     =   270;
 
     // debug values
@@ -163,7 +163,7 @@ public class AutoWheeled extends WheeledBotHardware {
                     //drive_power = 0;
 
                     // next state
-                    state = RobotState.BackABit;
+                    state = RobotState.Stop;
                 }
             }
             break;
@@ -213,7 +213,7 @@ public class AutoWheeled extends WheeledBotHardware {
             {
                 // release the climbers!
                 setDrivePower(0);
-                openGripper();
+                closeGripper();
 
                 if ( stopWatch.elapsedTime() > WaitBeaconPushDuration ) {
                     //pushRightGripper();
