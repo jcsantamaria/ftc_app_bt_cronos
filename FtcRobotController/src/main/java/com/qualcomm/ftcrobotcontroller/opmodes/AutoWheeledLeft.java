@@ -8,8 +8,8 @@ public class AutoWheeledLeft extends AutoWheeled {
     public AutoWheeledLeft() {
 
         // parameters for waypoint beacon
-        targetxBeacon           = -6700;
-        targetyBeacon           =  7100;
+        targetxBeacon           = -6800;
+        targetyBeacon           =  7150;
         targetHeadingBeacon     =   270;
     }
 }
