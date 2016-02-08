@@ -19,7 +19,7 @@ public class WheeledFullMode extends WheeledBotHardware {
         setArmMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
 
         //Set gripper to open
-        openGripper();
+        closeGripper();
 
         // default drive magnitude
         driveMagnitude = 0.4f;
