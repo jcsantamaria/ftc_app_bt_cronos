@@ -26,7 +26,7 @@ public class WheeledFullMode extends WheeledBotHardware {
 
         telemetry.addData("joy", String.format("%.2f %.2f", 0.0, 0.0));
         telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
-        telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));
+        //telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));
     }
 
     @Override
@@ -38,8 +38,8 @@ public class WheeledFullMode extends WheeledBotHardware {
         //Get the values from the gamepads
         //Note: pushing the stick all the way up returns -1,
         // so we need to reverse the y values
-        float xValue =  gamepad1.left_stick_x;
-        float yValue = -gamepad1.left_stick_y;
+        float xValue = -gamepad1.left_stick_x;
+        float yValue =  gamepad1.left_stick_y;
         float lValue = -gamepad1.right_stick_y;
 
         // scale inputs to non-linear to smooth control
@@ -82,9 +82,9 @@ public class WheeledFullMode extends WheeledBotHardware {
 
         //telemetry.addData("joy", String.format("%.2f %.2f",  xValue, yValue));
         telemetry.addData("pos", String.format("x:%4.0f y:%4.0f h:%3.0f", positionX, positionY, Math.toDegrees(heading)));
-        telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));
+        //telemetry.addData("rot", String.format("p:%3.0f r:%3.0f h:%3.0f", orientation.getPitch(), orientation.getRoll(), orientation.getHeading()));
         //telemetry.addData("touch", armTouch != null ? armTouch.isPressed() : "null");
-        telemetry.addData("arm", String.format("%s %.2f %d %s", onArmReset, armMotor.getPower(), armMotor.getCurrentPosition(), armMotor.getMode().toString()));
+        //telemetry.addData("arm", String.format("%s %.2f %d %s", onArmReset, armMotor.getPower(), armMotor.getCurrentPosition(), armMotor.getMode().toString()));
         //telemetry.addData("distance", String.format("%.2f", opticalDistanceSensor.getLightDetected()));
     }
 }
