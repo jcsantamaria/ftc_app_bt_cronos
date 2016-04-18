@@ -197,20 +197,21 @@ public class WheeledBotHardware extends OpMode {
     @Override
     public void loop() {
         // on arm reset, keep changing drive mode until ready
-        DcMotorController.RunMode mode = armMotor.getMode();
-        if ( onArmReset ) {
-            // force a reset until we detect a position==0
-            if ( mode != DcMotorController.RunMode.RESET_ENCODERS || armMotor.getCurrentPosition() != 0)
-                armMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
+        if ( armMotor != null ) {
+            DcMotorController.RunMode mode = armMotor.getMode();
+            if (onArmReset) {
+                // force a reset until we detect a position==0
+                if (mode != DcMotorController.RunMode.RESET_ENCODERS || armMotor.getCurrentPosition() != 0)
+                    armMotor.setMode(DcMotorController.RunMode.RESET_ENCODERS);
 
-            // signal reset done when ready
-            if ( mode == DcMotorController.RunMode.RESET_ENCODERS && armMotor.getCurrentPosition() == 0) {
-                onArmReset = false;
+                // signal reset done when ready
+                if (mode == DcMotorController.RunMode.RESET_ENCODERS && armMotor.getCurrentPosition() == 0) {
+                    onArmReset = false;
+                }
+            } else if (mode != DcMotorController.RunMode.RUN_WITHOUT_ENCODERS) {
+                // force a power mode until we detect it
+                armMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
             }
-        }
-        else if (mode != DcMotorController.RunMode.RUN_WITHOUT_ENCODERS) {
-            // force a power mode until we detect it
-            armMotor.setMode(DcMotorController.RunMode.RUN_WITHOUT_ENCODERS);
         }
 
         // update absolution position
